@@ -77,7 +77,53 @@ def main():
     params = dict(id='ab75c33d-3a26-4342-b36a-6e5fef0a3ac3', apikey=API_KEY)
     json_print(make_request(end_link, params))
     """
+    
+    
+def info_buses():
+    """ Returns a data frame obtained by the api request to 'https://api.um.warszawa.pl/api/action/dbstore_get'.
+        The dataframe includes the BusId, Team and Coordinates. Notice that the key column of the dataframe repeats
+        itself after 8 rows. Ideally the values of the column key will be the headers. So we will end up with a
+        dataframe of size (7552,8). In that way it would be easier to access the info when matching the timetables
+        and the real arrivals hours. Feel free to modify anything !! 
+    """
+    end_link='dbstore_get'
+    resource_id='?id=ab75c33d-3a26-4342-b36a-6e5fef0a3ac3&&apikey='
+    url= MAIN_URL + end_link + resource_id + API_KEY
+    response=requests.get(url)
+    data=response.json()
+    df=json_normalize(data['result'],record_path='values',errors='ignore')
+    return df
 
+
+
+    def lines(bus_stopid):
+    """ Returns all lines available at a certain bus stop. Feel free to modify anything that can be
+        improved :) 
+     Args:
+        bus_stopid (int): Identifier of the bus stop.
+     Returns: 
+        lines3 (DF): The object returned is a dataframe. Notice that in the api documentation 
+        it is stated that for each bus_stop_id the  parameter busstopNr can get 2 values either
+        0 or 1. The resulting dataframe appends the values for both busstopNr.
+    """
+    resource_id='?id=88cd555f-6f31-43ca-9de4-66c479ad5942&busstopId='
+    bus_stop1Nr='&busstopNr=01&apikey='
+    bus_stop2Nr='&busstopNr=02&apikey='
+    end_link='dbtimetable_get'
+    url1= MAIN_URL + end_link + resource_id + str(bus_stopid) + bus_stop1Nr + API_KEY
+    url2= MAIN_URL + end_link + resource_id + str(bus_stopid) + bus_stop2Nr + API_KEY
+    response1=requests.get(url1).json() 
+    response2=requests.get(url2).json()
+    lines=json_normalize(response1['result'],sep="_",record_path='values')
+    lines=lines.drop('key',axis=1)
+    lines2=json_normalize(response2['result'],sep="_",record_path='values')
+    lines2=lines2.drop('key',axis=1)
+    lines3=lines.append(lines2)
+    lines3=lines3.reset_index()
+    del lines3['index']
+    lines3=lines3.rename(columns={'value':'Lines'})
+    lines3=lines3.drop_duplicates()
+    return lines3
 
 
 if __name__ == "__main__":
