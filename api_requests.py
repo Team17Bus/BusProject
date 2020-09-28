@@ -7,6 +7,7 @@ from api_key import my_api_key
 API_KEY = my_api_key
 MAIN_URL = 'https://api.um.warszawa.pl/api/action/'
 
+'test'
 
 def make_request(end_link, params):
     """ Function that makes a request to the api and returns the data queried if all parameters are valid
