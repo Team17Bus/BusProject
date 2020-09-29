@@ -74,7 +74,7 @@ Website: https://api.um.warszawa.pl/#
   - name=
   - apikey=
   
-#### Sample output (for name = Marysin)
+#### Sample output (for name = 'Marysin')
 ~~~
 {
     "result": [

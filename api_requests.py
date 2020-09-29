@@ -182,38 +182,10 @@ def dbtimetable_get(other_params=None, return_pd=True):
     if return_pd:
         #TODO: write function so that pandas DataFrame / python list object is returned
         if request_type == 'line_list':
-            return line_json_to_lst(r_json)
+             return pd.Series(line_json_to_lst(r_json)).rename('linia')
         elif request_type == 'set_of_stops':
-            return zespol_json_to_lst(r_json)
+             return pd.Series(zespol_json_to_lst(r_json)).rename('zespol')
         else:
             return dict_json_to_pd(r_json)
     else:
         return r_json()
-
-
-
-
-def main():
-    # Example calls (uncomment and print to see the results):
-
-    # df = busestrams_get(dict(type=1))
-
-    # df = dbstore_get()
-
-    # retrieving the line list for the Marszałkowska stop  (busstopId = 7009) and bar number 01 (busstopNr = 01) and line 523 (line = 523)
-    # df = dbtimetable_get(dict(busstopId='7009', busstopNr='01', line='523'))
-
-    # retrieving the line list for the Marszałkowska stop (busstopId = 7009) and bar number 01 (busstopNr = 01)
-    # df = dbtimetable_get(dict(busstopId='7009', busstopNr='01'))
-
-    # retrieving all the 'zespol' (??) for the busstop 'Marysin'
-    # df = dbtimetable_get(dict(name='Marysin'))
-
-    # pd.set_option('display.max_columns', None)
-
-    pass
-
-
-
-if __name__ == "__main__":
-    main()

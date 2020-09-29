@@ -2,6 +2,13 @@ api_key.py
 dbstore_json_output.json
 json_txt_output.txt
 dbstore_csv_output.csv
+dbstore_get().xlsx
+busestrams_get_csv_output.csv
+dbtimetable_get_lineList_csv_output.csv
+dbtimetable_get_lineList2_csv_output.csv
+dbtimetable_get_zespolList_csv_output.csv
+sample_output.xlsx
+~$sample_output.xlsx
 
 # Editors
 .vscode/
