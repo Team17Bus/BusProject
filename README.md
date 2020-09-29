@@ -12,7 +12,8 @@ In the file 'main.py', play around with functions and their parameters.
 There are 3 functions to call (see also 'OurAPIdocs'):
 - busestrams_get()
 - dbstore_get()
-- dbtimetable_get()
+- dbtimetable_get()    
+     
 The user only needs to take care of the parameters specified below. Please provide these parameters in the form of a python dictionary to the function.
 
 #### busestrams_get()
