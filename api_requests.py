@@ -107,6 +107,7 @@ def busestrams_get(other_params=None, return_pd=True):
         other_params = {}
     other_params['resource_id'] = resource_id
     other_params['apikey'] = API_KEY
+    other_params['type'] = '1'
     r = make_request(end_link, other_params)
     if return_pd:
         return pd.DataFrame(r.json()['result'])

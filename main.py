@@ -6,7 +6,7 @@ import pandas as pd
 def main():
     # Example calls (uncomment and print to see the results):
 
-    df = busestrams_get(dict(type=1))
+    df = busestrams_get()
 
     # df = dbstore_get()
 
