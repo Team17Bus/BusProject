@@ -10,7 +10,7 @@ The file 'OurAPIdocs' is intended for a quick overview/translation of the actual
 ### api_requests.py   
 File in which all the functions are defined -- no need to touch this. Is imported by main.py
 
-### main.py
+### main.py (file to run)
 In the file 'main.py', play around with functions and their parameters. 
 There are 3 functions to call (see also 'OurAPIdocs'):
 - busestrams_get()
