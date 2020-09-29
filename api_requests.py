@@ -1,8 +1,9 @@
 import requests
 import json
 from api_key import my_api_key
-from pandas import json_normalize
-
+import pandas as pd
+import numpy as np
+from copy import deepcopy
 
 # Assign your api key to the variable 'my_api_key' in the file 'api_key.py'
 API_KEY = my_api_key
@@ -46,11 +47,41 @@ def json_print(response):
         print(f'Status code: {response.status_code}')
 
 
+# helper function
+def dbstore_json_to_pd(json_object):
+    """Returns the json_object obtained by the dbstore api request in the form of a pandas DataFrame
+    Args:
+        json_object
+    Returns:
+        pandas DataFrame
+    """
 
-def busestrams_get(other_params=None):
-    """ Prints the json object obtained by the api request to 'https://api.um.warszawa.pl/api/action/busestrams_get'
+    data = json_object['result']
+    n = len(data)
+    lst_data = [{} for _ in range(n)]
+    dict_entry = {}
+    for i in range(n):
+        entry = data[i]['values']
+        for attr in entry:
+            k = attr['key']
+            v = attr['value']
+            dict_entry[k] = v
+        lst_data[i] = deepcopy(dict_entry)
+        dict_entry.clear()
+    return pd.DataFrame(lst_data)
+
+
+
+def busestrams_get(other_params=None, print_flag=True, return_pd = True):
+    """ Returns and optionally the json object or pandas dataframe obtained by the api request to 'https://api.um.warszawa.pl/api/action/busestrams_get'
     Args:
         other_params(dict): for specifying the other parameters to be included in the api request
+        print_flag(boolean): True if user wants to print the json object / pandas dataframe
+        return_pd(boolean): True if user wants to return a pandas dataframe, False if user wants a json object
+    Returns:
+        json object or pandas dataframe obtained by the api request
+    Example call:
+        busestrams_get(dict(type=1))
     """
     end_link = 'busestrams_get'
     resource_id = 'f2e5503e-927d-4ad3-9500-4ab9e55deb59'
@@ -58,14 +89,23 @@ def busestrams_get(other_params=None):
         other_params = {}
     other_params['resource_id'] = resource_id
     other_params['apikey'] = API_KEY
-    json_print(make_request(end_link, other_params))
+    r = make_request(end_link, other_params)
+    if print_flag:
+        json_print(r)
+    return r.json()
 
 
-def dbstore_get(other_params=None):
-    """ Prints the json object obtained by the api request to 'https://api.um.warszawa.pl/api/action/dbstore_get'
+def dbstore_get(other_params=None, print_flag=True, return_pd=True):
+    """ Returns and optionally prints the json object or pandas dataframe obtained by the api request to 'https://api.um.warszawa.pl/api/action/dbstore_get'
         This is a json object containing the coordinates of all the stops.
     Args:
         other_params(dict): for specifying the other parameters to be included in the api request
+        print_flag(boolean): True if user wants to print the json object / pandas dataframe
+        return_pd(boolean): True if user wants to return a pandas dataframe, False if user wants a json object
+    Returns:
+        json object or pandas dataframe obtained by the api request
+    Example call:
+        dbstore_get(dict(size=5), print_flag=False)
     """
     end_link = 'dbstore_get'
     id = 'ab75c33d-3a26-4342-b36a-6e5fef0a3ac3'
@@ -73,7 +113,14 @@ def dbstore_get(other_params=None):
         other_params = {}
     other_params['id'] = id
     other_params['apikey'] = API_KEY
-    json_print(make_request(end_link, other_params))
+    r = make_request(end_link, other_params)
+    if print_flag:
+        json_print(r)
+    r_json = r.json()
+    if return_pd:
+        return dbstore_json_to_pd(r_json)
+    else:
+        return r_json
 
 
 
@@ -111,9 +158,9 @@ def info_buses():
         url2= MAIN_URL + end_link + resource_id + str(bus_stopid) + bus_stop2Nr + API_KEY
         response1=requests.get(url1).json()
         response2=requests.get(url2).json()
-        lines=json_normalize(response1['result'],sep="_",record_path='values')
+        lines=pd.json_normalize(response1['result'],sep="_",record_path='values')
         lines=lines.drop('key',axis=1)
-        lines2=json_normalize(response2['result'],sep="_",record_path='values')
+        lines2=pd.json_normalize(response2['result'],sep="_",record_path='values')
         lines2=lines2.drop('key',axis=1)
         lines3=lines.append(lines2)
         lines3=lines3.reset_index()
@@ -127,7 +174,11 @@ def main():
     # Example calls:
 
     # busestrams_get(dict(type=1))
-    # dbstore_get()
+    # r = dbstore_get(print_flag=False)
+    #print(r)
+    #print(r['result'])
+    #print(pd.json_normalize(r['result']))
+
 
 
     # Example for which a functions has not been written yet:

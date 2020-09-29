@@ -1,6 +1,7 @@
 api_key.py
-json_output.json
-json_output.txt
+dbstore_json_output.json
+json_txt_output.txt
+dbstore_csv_output.csv
 
 # Editors
 .vscode/
