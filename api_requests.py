@@ -46,9 +46,8 @@ def json_print(response):
         print('Response Failed')
         print(f'Status code: {response.status_code}')
 
-
 # helper function
-def dbstore_json_to_pd(json_object):
+def dict_json_to_pd(json_object):
     """Returns the json_object obtained by the dbstore api request in the form of a pandas DataFrame
     Args:
         json_object
@@ -70,13 +69,32 @@ def dbstore_json_to_pd(json_object):
         dict_entry.clear()
     return pd.DataFrame(lst_data)
 
+# helper function
+def line_json_to_lst(json_object):
+    data = json_object['result']
+    n = len(data)
+    lst_data = ['' for _ in range(n)]
+    for i in range(n):
+        lst_data[i] = data[i]['values'][0]['value']
+    return lst_data
+
+# helper function
+def zespol_json_to_lst(json_object):
+    data = json_object['result']
+    n = len(data)
+    lst_data = ['' for _ in range(n)]
+    for i in range(n):
+        key_value_pairs = data[i]['values']
+        for kv in key_value_pairs:
+            if kv['key'] == 'zespol':
+                lst_data[i] = kv['value']
+    return lst_data
 
 
-def busestrams_get(other_params=None, print_flag=True, return_pd = True):
-    """ Returns and optionally the json object or pandas dataframe obtained by the api request to 'https://api.um.warszawa.pl/api/action/busestrams_get'
+def busestrams_get(other_params=None, return_pd=True):
+    """ Returns the json object or pandas dataframe obtained by the api request to 'https://api.um.warszawa.pl/api/action/busestrams_get'
     Args:
         other_params(dict): for specifying the other parameters to be included in the api request
-        print_flag(boolean): True if user wants to print the json object / pandas dataframe
         return_pd(boolean): True if user wants to return a pandas dataframe, False if user wants a json object
     Returns:
         json object or pandas dataframe obtained by the api request
@@ -90,17 +108,17 @@ def busestrams_get(other_params=None, print_flag=True, return_pd = True):
     other_params['resource_id'] = resource_id
     other_params['apikey'] = API_KEY
     r = make_request(end_link, other_params)
-    if print_flag:
-        json_print(r)
-    return r.json()
+    if return_pd:
+        return pd.DataFrame(r.json()['result'])
+    else:
+        return r.json()
 
 
-def dbstore_get(other_params=None, print_flag=True, return_pd=True):
-    """ Returns and optionally prints the json object or pandas dataframe obtained by the api request to 'https://api.um.warszawa.pl/api/action/dbstore_get'
+def dbstore_get(other_params=None, return_pd=True):
+    """ Returns the json object or pandas dataframe obtained by the api request to 'https://api.um.warszawa.pl/api/action/dbstore_get'
         This is a json object containing the coordinates of all the stops.
     Args:
         other_params(dict): for specifying the other parameters to be included in the api request
-        print_flag(boolean): True if user wants to print the json object / pandas dataframe
         return_pd(boolean): True if user wants to return a pandas dataframe, False if user wants a json object
     Returns:
         json object or pandas dataframe obtained by the api request
@@ -108,93 +126,92 @@ def dbstore_get(other_params=None, print_flag=True, return_pd=True):
         dbstore_get(dict(size=5), print_flag=False)
     """
     end_link = 'dbstore_get'
-    id = 'ab75c33d-3a26-4342-b36a-6e5fef0a3ac3'
+    id_param = 'ab75c33d-3a26-4342-b36a-6e5fef0a3ac3'
     if other_params is None:
         other_params = {}
-    other_params['id'] = id
+    other_params['id'] = id_param
     other_params['apikey'] = API_KEY
     r = make_request(end_link, other_params)
-    if print_flag:
-        json_print(r)
     r_json = r.json()
     if return_pd:
-        return dbstore_json_to_pd(r_json)
+        return dict_json_to_pd(r_json)
     else:
         return r_json
 
 
-
-def info_buses():
-    """ Returns a data frame obtained by the api request to 'https://api.um.warszawa.pl/api/action/dbstore_get'.
-        The dataframe includes the BusId, Team and Coordinates. Notice that the key column of the dataframe repeats
-        itself after 8 rows. Ideally the values of the column key will be the headers. So we will end up with a
-        dataframe of size (7552,8). In that way it would be easier to access the info when matching the timetables
-        and the real arrivals hours. Feel free to modify anything !!
+def dbtimetable_get(other_params=None, return_pd=True):
+    """ Returns the json object or pandas dataframe / python list object obtained by the api request to 'https://api.um.warszawa.pl/api/action/timetable_get'
+        Depending on the parameters given, one of the following data is returned:
+            - timetable for a specific line for a busstopId and a busstopNr     (if 'line', 'busstopId', 'busstopNr' provided)
+            - set of stops                                                      (if 'name' provided)
+            - lines available at a stop with busstopId and busstopNr            (if 'busstopId', 'busstopNr' provided)
+    Args:
+        other_params(dict): for specifying the other parameters to be included in the api request
+        return_pd(boolean): True if user wants to return a pandas dataframe, False if user wants a json object
+    Returns:
+        json object or pandas dataframe obtained by the api request
+    Example calls:
+            - Retrieving the line list for the Marszałkowska stop  (busstopId = 7009) and bar number 01 (busstopNr = 01) and line 523 (line = 523)
+                dbtimetable_get(dict(busstopId='7009', busstopNr='01', line='523'))
+            - Retrieving the line list for the Marszałkowska stop (busstopId = 7009) and bar number 01 (busstopNr = 01)
+                dbtimetable_get(dict(busstopId='7009', busstopNr='01'))
+            - Retrieving the line list for the stop "Marszałkowska"
+                dbtimetable_get(dict(name='Marsza\u0142kowska'))
     """
-    end_link = 'dbstore_get'
-    resource_id = '?id=ab75c33d-3a26-4342-b36a-6e5fef0a3ac3&&apikey='
-    url = MAIN_URL + end_link + resource_id + API_KEY
-    response = requests.get(url)
-    data = response.json()
-    df = json_normalize(data['result'], record_path='values', errors='ignore')
-    return df
+
+    end_link = 'dbtimetable_get'
+    request_type = ''
+
+    # Request: timetable for a specific line for a busstopId and a busstopNr
+    if 'line' in other_params:
+        request_type = 'timetable'
+        id_param = 'e923fa0e-d96c-43f9-ae6e-60518c9f3238'
+    # Request: set of stops with 'name'
+    elif 'name' in other_params:
+        request_type = 'set_of_stops'
+        id_param = 'b27f4c17-5c50-4a5b-89dd-236b282bc499'
+    # Request: lines available at a stop with busstopId and busstopNr
+    else:
+        request_type = 'line_list'
+        id_param = '88cd555f-6f31-43ca-9de4-66c479ad5942'
+
+    other_params['id'] = id_param
+    other_params['apikey'] = API_KEY
+    r = make_request(end_link, other_params)
+    r_json = r.json()
+    if return_pd:
+        #TODO: write function so that pandas DataFrame / python list object is returned
+        if request_type == 'line_list':
+            return line_json_to_lst(r_json)
+        elif request_type == 'set_of_stops':
+            return zespol_json_to_lst(r_json)
+        else:
+            return dict_json_to_pd(r_json)
+    else:
+        return r_json()
 
 
-    def lines(bus_stopid):
-        """ Returns all lines available at a certain bus stop. Feel free to modify anything that can be
-            improved :)
-         Args:
-            bus_stopid (int): Identifier of the bus stop.
-         Returns:
-            lines3 (DF): The object returned is a dataframe. Notice that in the api documentation
-            it is stated that for each bus_stop_id the  parameter busstopNr can get 2 values either
-            0 or 1. The resulting dataframe appends the values for both busstopNr.
-        """
-        resource_id='?id=88cd555f-6f31-43ca-9de4-66c479ad5942&busstopId='
-        bus_stop1Nr='&busstopNr=01&apikey='
-        bus_stop2Nr='&busstopNr=02&apikey='
-        end_link='dbtimetable_get'
-        url1= MAIN_URL + end_link + resource_id + str(bus_stopid) + bus_stop1Nr + API_KEY
-        url2= MAIN_URL + end_link + resource_id + str(bus_stopid) + bus_stop2Nr + API_KEY
-        response1=requests.get(url1).json()
-        response2=requests.get(url2).json()
-        lines=pd.json_normalize(response1['result'],sep="_",record_path='values')
-        lines=lines.drop('key',axis=1)
-        lines2=pd.json_normalize(response2['result'],sep="_",record_path='values')
-        lines2=lines2.drop('key',axis=1)
-        lines3=lines.append(lines2)
-        lines3=lines3.reset_index()
-        del lines3['index']
-        lines3=lines3.rename(columns={'value':'Lines'})
-        lines3=lines3.drop_duplicates()
-        return lines3
+
 
 def main():
+    # Example calls (uncomment and print to see the results):
 
-    # Example calls:
+    # df = busestrams_get(dict(type=1))
 
-    # busestrams_get(dict(type=1))
-    # r = dbstore_get(print_flag=False)
-    #print(r)
-    #print(r['result'])
-    #print(pd.json_normalize(r['result']))
+    # df = dbstore_get()
 
+    # retrieving the line list for the Marszałkowska stop  (busstopId = 7009) and bar number 01 (busstopNr = 01) and line 523 (line = 523)
+    # df = dbtimetable_get(dict(busstopId='7009', busstopNr='01', line='523'))
 
+    # retrieving the line list for the Marszałkowska stop (busstopId = 7009) and bar number 01 (busstopNr = 01)
+    # df = dbtimetable_get(dict(busstopId='7009', busstopNr='01'))
 
-    # Example for which a functions has not been written yet:
-        # note: the below request returns '[]' --> maybe the stop 'nazwaprzystanku' isn't active anymore?
-    """ 
-    end_link = 'dbtimetable_get'
-    params = dict(id='b27f4c17-5c50-4a5b-89dd-236b282bc499', name='nazwaprzystanku', apikey=API_KEY)
-    json_print(make_request(end_link, params))
+    # retrieving all the 'zespol' (??) for the busstop 'Marysin'
+    # df = dbtimetable_get(dict(name='Marysin'))
 
+    # pd.set_option('display.max_columns', None)
 
-    #df = info_buses()
-    #print(df)
-    """
-
-
-
+    pass
 
 
 

@@ -6,7 +6,7 @@ Website: https://api.um.warszawa.pl/#
 
 -------------------------------------
 
-### busestrams_get
+## busestrams_get
 ##### Online location of public transport, updated every 10 seconds
 
 #### Required parameters
@@ -60,35 +60,202 @@ Website: https://api.um.warszawa.pl/#
 ~~~
 
 -------------------------------------
+-------------------------------------
+
+## dbtimetable_get
+
+##### Gives access to public transport timetables  
 
 
-### dbtimetable_get
+### Set of stops: 
+(id=b27f4c17-5c50-4a5b-89dd-236b282bc499)
 
-##### Gives access to public transport timetables
-
-  - set of stops: 
-	 id=b27f4c17-5c50-4a5b-89dd-236b282bc499
-      - name=
-      - apikey=
-
-  - lines available at the stop: 
-	 id=88cd555f-6f31-43ca-9de4-66c479ad5942
-      - busstopId=
-      - busstopNr=
-      - apikey=
-
-  - timetable for the line:
-	 id=e923fa0e-d96c-43f9-ae6e-60518c9f3238
-      - busstopId=
-      - busstopNr=
-      - line=
-      - apikey=
-
+#### Required parameters
+  - name=
+  - apikey=
+  
+#### Sample output (for name = Marysin)
+~~~
+{
+    "result": [
+        {
+            "values": [
+                {
+                    "key": "zespol",
+                    "value": "2064"
+                },
+                {
+                    "key": "nazwa",
+                    "value": "Marysin"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "key": "zespol",
+                    "value": "4072"
+                },
+                {
+                    "key": "nazwa",
+                    "value": "Marysin"
+                }
+            ]
+        }
+    ]
+}
+~~~
 
 -------------------------------------
 
+### Lines available at a stop with busstopId and busstopNr: 
+(id=88cd555f-6f31-43ca-9de4-66c479ad5942)
 
-### dbstore_get
+#### Required parameters
+  - busstopId= &nbsp;&nbsp;&nbsp; (e.g. '7009')
+  - busstopNr= &nbsp;&nbsp; (e.g. '01')
+  - apikey=
+
+##### Sample output (for busstopId='7009', busstopNr='01'); real output has 13 entries as of 29/09/2020
+~~~
+{
+    "result": [
+        {
+            "values": [
+                {
+                    "key": "linia",
+                    "value": "138"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "key": "linia",
+                    "value": "143"
+                }
+            ]
+        },
+        ...
+        {
+            "values": [
+                {
+                    "key": "linia",
+                    "value": "N25"
+                }
+            ]
+        }
+    ]
+}
+~~~
+-------------------------------------
+
+### Timetable for a specific line for a busstopId and a busstopNr:
+(id=e923fa0e-d96c-43f9-ae6e-60518c9f3238)
+
+#### Required parameters
+  - busstopId= &nbsp;&nbsp;&nbsp; (e.g. '7009')
+  - busstopNr= &nbsp;&nbsp; (e.g. '01')
+  - line= &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (e.g. '523')
+  - apikey=
+ 
+##### Sample output (for busstopId='7009', busstopNr='01', line='523'); real output has 149 entries as of 29/09/2020
+~~~
+{
+    "result": [
+        {
+            "values": [
+                {
+                    "key": "symbol_2",
+                    "value": "null"
+                },
+                {
+                    "key": "symbol_1",
+                    "value": "null"
+                },
+                {
+                    "key": "brygada",
+                    "value": "14"
+                },
+                {
+                    "key": "kierunek",
+                    "value": "PKP Olszynka Grochowska"
+                },
+                {
+                    "key": "trasa",
+                    "value": "TP-OLS"
+                },
+                {
+                    "key": "czas",
+                    "value": "05:00:00"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "key": "symbol_2",
+                    "value": "null"
+                },
+                {
+                    "key": "symbol_1",
+                    "value": "null"
+                },
+                {
+                    "key": "brygada",
+                    "value": "017"
+                },
+                {
+                    "key": "kierunek",
+                    "value": "PKP Olszynka Grochowska"
+                },
+                {
+                    "key": "trasa",
+                    "value": "TP-OLS"
+                },
+                {
+                    "key": "czas",
+                    "value": "05:08:00"
+                }
+            ]
+        },
+        ...
+        {
+            "values": [
+                {
+                    "key": "symbol_2",
+                    "value": "null"
+                },
+                {
+                    "key": "symbol_1",
+                    "value": "null"
+                },
+                {
+                    "key": "brygada",
+                    "value": "3"
+                },
+                {
+                    "key": "kierunek",
+                    "value": "PKP Olszynka Grochowska"
+                },
+                {
+                    "key": "trasa",
+                    "value": "TX-OLS"
+                },
+                {
+                    "key": "czas",
+                    "value": "23:50:00"
+                }
+            ]
+        }
+    ]
+}
+~~~
+
+-------------------------------------
+-------------------------------------
+
+## dbstore_get
 ##### Coordinates of the stops
 
 #### Required parameters
