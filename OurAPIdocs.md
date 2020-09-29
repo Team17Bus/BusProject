@@ -10,20 +10,20 @@ Website: https://api.um.warszawa.pl/#
 ##### Online location of public transport, updated every 10 seconds
 
 #### Required parameters
-  - resource_id=f2e5503e-927d-4ad3-9500-4ab9e55deb59
-  - apikey=
-  - type=1    (2 for tram locations, which we won't need)
+- resource_id=f2e5503e-927d-4ad3-9500-4ab9e55deb59
+- apikey=
+- type=1    (2 for tram locations, which we won't need)
+
 #### Optional parameters
 - line=
 - brigade=
 
- #### Available data
+#### Available data
 - Lat - latitude coordinate in the WGS84 system (EPSG: 4326)
 - Lon - longitude coordinate in the WGS84 system (EPSG: 4326)
 - Time - time of sending the GPS signal
 - Lines - number of a bus or tram line
 - Brigade - the brigade number of the vehicle
-
 
 #### Sample output
 
@@ -84,6 +84,157 @@ Website: https://api.um.warszawa.pl/#
       - line=
       - apikey=
 
-<!--stackedit_data:
-eyJoaXN0b3J5IjpbLTEwNzYyNzU1NjVdfQ==
--->
+
+-------------------------------------
+
+
+### dbstore_get
+##### Coordinates of the stops
+
+#### Required parameters
+  - id=ab75c33d-3a26-4342-b36a-6e5fef0a3ac3
+  - apikey=
+  
+#### Optional parameters
+- sortBy= [ some 'id' ]
+- page= [ e.g. 1 ]
+- size= [ e.g. 5 ]
+
+ #### Available data, with examples
+- zespol - team (?)   
+  &nbsp;&nbsp; '1872'
+- slupek - 'ISP' (= 'INTERNET-DIENSTANBIETER' in German)   
+  &nbsp;&nbsp; '01', '02', '81'
+- nazwa_zespolu - team name   
+  &nbsp;&nbsp; 'Wrzosowa', 'S\u0142oneczna', 'Rzeczna'
+- id_ulicy - street id (?)    
+  &nbsp;&nbsp; '1757', '0714'
+- szer_geo - latitude   
+  &nbsp;&nbsp; '52.419343'
+- dlug_geo - longitude   
+  &nbsp;&nbsp; '20.945165'
+- kierunek - direction, line (?)   
+  &nbsp;&nbsp; 'Ko\u015bcielna', 'Nowodworska', 'Fabryczna'  
+- obowiazuje_od - effective as of   
+  &nbsp;&nbsp; '2020-06-01 00:00:00.0'
+
+#### Sample output
+(The actual output has 7446 stops when last checked (29-09-2020); the sample output below shows 3.)
+
+~~~
+{
+    "result": [
+        {
+            "values": [
+                {
+                    "value": "1001",
+                    "key": "zespol"
+                },
+                {
+                    "value": "01",
+                    "key": "slupek"
+                },
+                {
+                    "value": "Kijowska",
+                    "key": "nazwa_zespolu"
+                },
+                {
+                    "value": "2201",
+                    "key": "id_ulicy"
+                },
+                {
+                    "value": "52.248455",
+                    "key": "szer_geo"
+                },
+                {
+                    "value": "21.044827",
+                    "key": "dlug_geo"
+                },
+                {
+                    "value": "al.Zieleniecka",
+                    "key": "kierunek"
+                },
+                {
+                    "value": "2020-06-01 00:00:00.0",
+                    "key": "obowiazuje_od"
+                }
+            ]
+        },
+        {
+            "values": [
+                {
+                    "value": "1001",
+                    "key": "zespol"
+                },
+                {
+                    "value": "02",
+                    "key": "slupek"
+                },
+                {
+                    "value": "Kijowska",
+                    "key": "nazwa_zespolu"
+                },
+                {
+                    "value": "2201",
+                    "key": "id_ulicy"
+                },
+                {
+                    "value": "52.249078",
+                    "key": "szer_geo"
+                },
+                {
+                    "value": "21.044443",
+                    "key": "dlug_geo"
+                },
+                {
+                    "value": "Z\u0105bkowska",
+                    "key": "kierunek"
+                },
+                {
+                    "value": "2020-06-01 00:00:00.0",
+                    "key": "obowiazuje_od"
+                }
+            ]
+        },
+        ...
+        {
+            "values": [
+                {
+                    "value": "R-19",
+                    "key": "zespol"
+                },
+                {
+                    "value": "99",
+                    "key": "slupek"
+                },
+                {
+                    "value": "WYDZIA\u0141 W\u0141O\u015aCIA\u0143SKA",
+                    "key": "nazwa_zespolu"
+                },
+                {
+                    "value": "2575",
+                    "key": "id_ulicy"
+                },
+                {
+                    "value": "52.271236",
+                    "key": "szer_geo"
+                },
+                {
+                    "value": "20.968496",
+                    "key": "dlug_geo"
+                },
+                {
+                    "value": "WYDZIA\u0141 W\u0141O\u015aCIA\u0143SKA",
+                    "key": "kierunek"
+                },
+                {
+                    "value": "2020-06-01 00:00:00.0",
+                    "key": "obowiazuje_od"
+                }
+            ]
+        }
+    ]
+}
+~~~
+
+

@@ -1,4 +1,6 @@
 api_key.py
+json_output.json
+json_output.txt
 
 # Editors
 .vscode/

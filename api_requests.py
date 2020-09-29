@@ -1,14 +1,15 @@
 import requests
 import json
 from api_key import my_api_key
+from pandas import json_normalize
 
 
-# Put in your api key!!!
+# Assign your api key to the variable 'my_api_key' in the file 'api_key.py'
 API_KEY = my_api_key
 MAIN_URL = 'https://api.um.warszawa.pl/api/action/'
 
-'test'
 
+# helper function
 def make_request(end_link, params):
     """ Function that makes a request to the api and returns the data queried if all parameters are valid
             Note: make sure to fill in your api key for the global variable API_KEY above
@@ -29,6 +30,7 @@ def make_request(end_link, params):
     response = requests.get(url, params=params)
     return response
 
+# helper function
 def json_print(response):
     """ Checks whether request was successful and if so, 'pretty' prints json object contained in the response object
     Args:
@@ -47,8 +49,6 @@ def json_print(response):
 
 def busestrams_get(other_params=None):
     """ Prints the json object obtained by the api request to 'https://api.um.warszawa.pl/api/action/busestrams_get'
-        (Goal is to write similar functions for other 'sub-links' with their corresponding resource-ids
-        Benefit: only takes in the other parameters, no need to look up sub-link/resource_id every time or include api key)
     Args:
         other_params(dict): for specifying the other parameters to be included in the api request
     """
@@ -60,6 +60,23 @@ def busestrams_get(other_params=None):
     other_params['apikey'] = API_KEY
     json_print(make_request(end_link, other_params))
 
+
+def dbstore_get(other_params=None):
+    """ Prints the json object obtained by the api request to 'https://api.um.warszawa.pl/api/action/dbstore_get'
+        This is a json object containing the coordinates of all the stops.
+    Args:
+        other_params(dict): for specifying the other parameters to be included in the api request
+    """
+    end_link = 'dbstore_get'
+    id = 'ab75c33d-3a26-4342-b36a-6e5fef0a3ac3'
+    if other_params is None:
+        other_params = {}
+    other_params['id'] = id
+    other_params['apikey'] = API_KEY
+    json_print(make_request(end_link, other_params))
+
+
+
 def info_buses():
     """ Returns a data frame obtained by the api request to 'https://api.um.warszawa.pl/api/action/dbstore_get'.
         The dataframe includes the BusId, Team and Coordinates. Notice that the key column of the dataframe repeats
@@ -67,12 +84,12 @@ def info_buses():
         dataframe of size (7552,8). In that way it would be easier to access the info when matching the timetables
         and the real arrivals hours. Feel free to modify anything !!
     """
-    end_link='dbstore_get'
-    resource_id='?id=ab75c33d-3a26-4342-b36a-6e5fef0a3ac3&&apikey='
-    url= MAIN_URL + end_link + resource_id + API_KEY
-    response=requests.get(url)
-    data=response.json()
-    df=json_normalize(data['result'],record_path='values',errors='ignore')
+    end_link = 'dbstore_get'
+    resource_id = '?id=ab75c33d-3a26-4342-b36a-6e5fef0a3ac3&&apikey='
+    url = MAIN_URL + end_link + resource_id + API_KEY
+    response = requests.get(url)
+    data = response.json()
+    df = json_normalize(data['result'], record_path='values', errors='ignore')
     return df
 
 
@@ -107,20 +124,26 @@ def info_buses():
 
 def main():
 
-    # Example for which a function has been written:
-    busestrams_get(dict(type=1))
+    # Example calls:
 
-    # Examples for which a functions has not been written yet:
+    # busestrams_get(dict(type=1))
+    # dbstore_get()
+
+
+    # Example for which a functions has not been written yet:
         # note: the below request returns '[]' --> maybe the stop 'nazwaprzystanku' isn't active anymore?
     """ 
     end_link = 'dbtimetable_get'
     params = dict(id='b27f4c17-5c50-4a5b-89dd-236b282bc499', name='nazwaprzystanku', apikey=API_KEY)
     json_print(make_request(end_link, params))
 
-    end_link = 'dbstore_get'
-    params = dict(id='ab75c33d-3a26-4342-b36a-6e5fef0a3ac3', apikey=API_KEY)
-    json_print(make_request(end_link, params))
+
+    #df = info_buses()
+    #print(df)
     """
+
+
+
 
 
 
