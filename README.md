@@ -7,6 +7,9 @@ Obtain an api key from https://api.um.warszawa.pl/# and assign this (as a string
 ### OurAPIdocs.md
 The file 'OurAPIdocs' is intended for a quick overview/translation of the actual documentation
 
+### api_requests.py   
+File in which all the functions are defined -- no need to touch this. Is imported by main.py
+
 ### main.py
 In the file 'main.py', play around with functions and their parameters. 
 There are 3 functions to call (see also 'OurAPIdocs'):
