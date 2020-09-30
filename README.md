@@ -127,3 +127,8 @@ Sample output for dbtimetable_get(dict(busstopId='7009', busstopNr='01')):
 Name: zespol, dtype: object
 ~~~
 
+    
+Important translations (see for others 'OurAPIDocs'):
+- zespol == busstopId   
+- slupek == busstopNr   
+- brygada == id of a vehicle (bus/tram) on a specific line
