@@ -128,7 +128,7 @@ Name: zespol, dtype: object
 ~~~
 
     
-Important translations (see for others 'OurAPIDocs'):
+#### Important translations (see for others 'OurAPIDocs'):
 - zespol == busstopId   
 - slupek == busstopNr   
 - brygada == id of a vehicle (bus/tram) on a specific line
