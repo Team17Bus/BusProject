@@ -16,14 +16,14 @@ Website: https://api.um.warszawa.pl/#
 
 #### Optional parameters
 - line=
-- brigade=
+- brigade= &nbsp;&nbsp;&nbsp;&nbsp; (Kuba: "like an ID of a certain vehicle (here: bus) on specific line, e.g. This is why these numbers repeat on various lines.")
 
 #### Available data
 - Lat - latitude coordinate in the WGS84 system (EPSG: 4326)
 - Lon - longitude coordinate in the WGS84 system (EPSG: 4326)
 - Time - time of sending the GPS signal
 - Lines - number of a bus or tram line
-- Brigade - the brigade number of the vehicle
+- Brigade - id of a certain vehicle on a specific line
 
 #### Sample output
 
@@ -75,6 +75,8 @@ Website: https://api.um.warszawa.pl/#
   - apikey=
   
 #### Sample output (for name = 'Marysin')
+- zespol - busstopId    
+- nazwa - name
 ~~~
 {
     "result": [
@@ -117,6 +119,7 @@ Website: https://api.um.warszawa.pl/#
   - apikey=
 
 ##### Sample output (for busstopId='7009', busstopNr='01'); real output has 13 entries as of 29/09/2020
+- linia - line
 ~~~
 {
     "result": [
@@ -160,6 +163,11 @@ Website: https://api.um.warszawa.pl/#
   - apikey=
  
 ##### Sample output (for busstopId='7009', busstopNr='01', line='523'); real output has 149 entries as of 29/09/2020
+- kierunek - direction (Kuba: "Last stop’s name of a specific route determines direction.")
+- trasa (Kuba: "I assume these codes define the first and last stop on a specific line. They may differ for a specific line as some routes end faster than usual (e.g. last course of the day ends in the bus central rather than the final loop).")    
+- czas - time
+
+
 ~~~
 {
     "result": [
@@ -268,19 +276,19 @@ Website: https://api.um.warszawa.pl/#
 - size= [ e.g. 5 ]
 
  #### Available data, with examples
-- zespol - team (?)   
+- zespol - busstopId  
   &nbsp;&nbsp; '1872'
-- slupek - 'ISP' (= 'INTERNET-DIENSTANBIETER' in German)   
+- slupek - busstopNr (Kuba: "refers to the id of a specific stop with the same name. E.g. there is a stop Radiowa-WAT 1 and Radiowa-WAT 2 (different directions). Sometimes there are 8 stops with the same name but they don’t have to start from 1.")   
   &nbsp;&nbsp; '01', '02', '81'
-- nazwa_zespolu - team name   
+- nazwa_zespolu - busstop name   
   &nbsp;&nbsp; 'Wrzosowa', 'S\u0142oneczna', 'Rzeczna'
-- id_ulicy - street id (?)    
+- id_ulicy - street id (??)    
   &nbsp;&nbsp; '1757', '0714'
 - szer_geo - latitude   
   &nbsp;&nbsp; '52.419343'
 - dlug_geo - longitude   
   &nbsp;&nbsp; '20.945165'
-- kierunek - direction, line (?)   
+- kierunek - direction (Kuba: "Last stop’s name of a specific route determines direction.")
   &nbsp;&nbsp; 'Ko\u015bcielna', 'Nowodworska', 'Fabryczna'  
 - obowiazuje_od - effective as of   
   &nbsp;&nbsp; '2020-06-01 00:00:00.0'
