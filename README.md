@@ -126,10 +126,42 @@ Sample output for dbtimetable_get(dict(busstopId='7009', busstopNr='01')):
 1    4072
 Name: zespol, dtype: object
 ~~~
-
     
 #### Important translations (see 'OurAPIDocs' for others ):
 - zespol == busstopId   
 - slupek == busstopNr   
 - brygada: id of a vehicle (bus/tram) on a specific line
 - linia: line number
+
+### Description of the files
+A short description of what is in the files from the Warsaw public transport.
+
+#### Buses
+For every day there is a separate file specifying the locations of buses, for every record the following is available:
+- number of the bus or tram line
+- vehicle brigade number
+- time of sending the GPS signal
+- latitude coordinate in the WGS84 system
+- longitude coordinate in the WGS84 system
+- time of obtaining information by the internal system BCM
+
+!!Note that there is no unique id for every bus - a combination of line number and brigade number will have to serve as a unique ID. It has, so far not been confirmed that this is safe to do!!
+
+#### Schedules
+The individual catalogs contain the timetable in GTFS format (https://developers.google.com/transit/gtfs).
+For 2020-09-07, 2020-09-14 files have not been generated.
+
+on the open data portal m.st. Warsaw (https://api.um.warszawa.pl) provides information about:
+- stops
+- lines available at the stop
+- line departure time from the stop (current and archived about 2 months back)
+
+For every day there is a separate folder with the following files:
+- Agency: Transit agencies with service represented in this dataset.
+- Calendar: Service dates specified using a weekly schedule with start and end dates. 
+- Routes: Transit routes. A route is a group of trips that are displayed to riders as a single service.
+- Stop_times: Times that a vehicle arrives at and departs from stops for each trip.
+- Stops: Stops where vehicles pick up or drop off riders. Also defines stations and station entrances.
+- Timetables: Basically the timetable present at the busstop (?) (Not present in the GTFS documentation)
+- Trips: Trips for each route. A trip is a sequence of two or more stops that occur during a specific time period.
+For more information about these files, please check the GTFS documentation (it's nice :)
