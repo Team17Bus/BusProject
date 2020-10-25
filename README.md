@@ -162,6 +162,22 @@ For every day there is a separate folder with the following files:
 - Routes: Transit routes. A route is a group of trips that are displayed to riders as a single service.
 - Stop_times: Times that a vehicle arrives at and departs from stops for each trip.
 - Stops: Stops where vehicles pick up or drop off riders. Also defines stations and station entrances.
-- Timetables: Basically the timetable present at the busstop (?) (Not present in the GTFS documentation)
+- Timetables: Basically the complete timetable for the day* (Not present in the GTFS documentation)
 - Trips: Trips for each route. A trip is a sequence of two or more stops that occur during a specific time period.
 For more information about these files, please check the GTFS documentation (it's nice :)
+
+*) This is what I figured to be in the timetables file:
+
+1. Line number
+2. Trip# (the line is driven let's say 20 times per day, every trip has its own number Can als be identified with the departure time for the first stop on the line, in other datasets)
+3. Stop_lat: Latitude of the bus stop
+4. Stop_long: Longitude of the bus stop
+5. Stop_id: Identification of the bus stop. Is the same one as used in other datasets (e.g. 7009_01), not confirmed.
+6. Stop_name: Normal name of the bus stop. Is the same name as used in other datasets, not confirmed.
+7. Time: a time that belongs to a combination of stop and line-trip. Unknown wether this is the arrival or departure time.
+8. Code: some unice code line_trip_magicNumber_departureTimeFirstStopInTrip
+9. A magic number which I don't know what it represents.
+10. Stop_number: a number that indicates the index of the stop at the trip (e.g. 5, then it is the fifth bus stop on the trip). Sometimes these numbers do not start at 1, or jumps are being made.
+11. Another magic number, which is 1 in many cases
+12. Has either the value 'day' or 'night'
+13. Platform number, is also indicated in the stop_id (the 01 ofter 7009). However, for some reason the needed it as another separate variable.
