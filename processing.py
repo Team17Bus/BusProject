@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import datetime
 from math import radians, cos, sin, asin, sqrt
 import api_requests as api
 from collections import defaultdict
@@ -108,3 +109,30 @@ def get_timetable_per_busstop_per_line(busstops_per_line_dict):
             progress += 1
             print(progress)
     return timetable_per_busstop_per_line_dict
+
+#
+def find_arrival(stop_time, bus_locations):
+    """
+    A first attempt to find the right arrival event.
+    Also contains some pre-processing and cleaning steps.
+
+    Args:
+        stop_time: one line from the stop_times dataset (i.e. one stop event)
+        bus_locations: for now all bus locations
+
+    Returns:
+
+    """
+    time_obj = datetime.datetime.strptime(stop_time["arrival_time"],' %H:%M:%S')
+    scheduled_arr_time = time_obj.time()
+
+    print('Time:', scheduled_arr_time)
+
+    for ind,r in bus_locations[0:5].iterrows():
+        print(r['TimeGPS'].time())
+
+        #delta = scheduled_arr_time - r['TimeGPS'].time()
+
+        #print(delta)
+
+    return
