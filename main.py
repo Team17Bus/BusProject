@@ -125,6 +125,8 @@ def main():
     data_stop_times['departure_time'] = data_stop_times['departure_time'].str.replace(' 28', ' 04')
     data_stop_times['departure_time'] = data_stop_times['departure_time'].str.replace(' 29', ' 05')
 
+    data_stop_times['stop_id'] = data_stop_times['stop_id'].str.replace(' ','')
+
     data_stop_times['arrival_time'] = pd.to_datetime(today+data_stop_times['arrival_time'],
                                                      format='%Y-%m-%d %H:%M:%S')
     data_stop_times['departure_time'] = pd.to_datetime(today+data_stop_times['departure_time'],
@@ -159,13 +161,11 @@ def main():
 
     # todo: is there a more efficient way than sending the whole schedule every time?
 
-    test_arrival_time = '21:18:17'
+    # lines below are for testing schedule matching
+    test_arrival_time = '21:18:30'
     test_arrival_time = datetime.datetime.strptime(today+' '+test_arrival_time,'%Y-%m-%d %H:%M:%S')
-
     test_arrival = ["109",test_arrival_time,'7013_06']
-
-    i = match_arrival(data_stop_times,test_arrival)
-
+    data_arrival_times = match_arrival(data_arrival_times,test_arrival)
 
     pass
 
