@@ -124,15 +124,17 @@ def find_arrival(stop_time, bus_locations):
 
     """
     time_obj = datetime.datetime.strptime(stop_time["arrival_time"],' %H:%M:%S')
-    scheduled_arr_time = time_obj.time()
-
-    print('Time:', scheduled_arr_time)
-
     for ind,r in bus_locations[0:5].iterrows():
         print(r['TimeGPS'].time())
 
         #delta = scheduled_arr_time - r['TimeGPS'].time()
 
         #print(delta)
+
+    scheduled_arr_time = stop_time['arrival_time']
+    for ind, r in bus_locations[0:5].iterrows():
+        print(r['TimeGPS'].time())
+        delta = scheduled_arr_time - r['TimeGPS'].time()
+        print(delta)
 
     return

@@ -3,6 +3,7 @@ import pandas as pd
 import datetime
 from processing import get_all_lines, get_lines_per_busstop, get_busstops_per_line, get_timetable_per_busstop_per_line, coord_distance, find_arrival
 import json
+from schedule_matching import match_arrival
 
 
 def main():
@@ -81,6 +82,10 @@ def main():
         print(dist)
     """
 
+    today = '2020-09-01' # this is a parameter that indicates the day you are working with,
+                        # which is necessary for computing the datetime objects (where only time is available)
+    today_dt = datetime.datetime.strptime(today, '%Y-%m-%d').date()
+
     # Importing the bus locations of a specific day (make sure to use the right directory)
     data_bus = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/buses/t_2020_08_31_23_30",
                        sep=";",
@@ -88,14 +93,8 @@ def main():
     data_bus.columns = ["Line","Brigade","TimeGPS","Lat","Long","TimeLog"]
 
     # TODO: Cleaning and formatting the data (probably move this to a separate function)
-    # For some reason this actually does not overwrite the value???
-    for i,r in data_bus.iterrows():
-        datetime_object = datetime.datetime.strptime(r["TimeGPS"], '%Y-%m-%d %H:%M:%S')
-        r["TimeGPS"] = datetime_object
-
-        r['TimeLog'] = r['TimeLog'].replace("T"," ")
-        datetime_object = datetime.datetime.strptime(r["TimeLog"], '%Y-%m-%d %H:%M:%S.%f')
-        r['TimeLog'] = datetime_object
+    data_bus['TimeGPS'] = pd.to_datetime(data_bus['TimeGPS'])
+    data_bus['TimeLog'] = pd.to_datetime(data_bus['TimeLog'])
 
     # TimeGPS: time of sending the GPS signal
     # TimeLong: time of receiving/processing the location by the system (irrelevant)
@@ -103,16 +102,41 @@ def main():
 
     # Importing the routes of a specific day (make sure to use the right directory)
     # Not exactly sure yet what the routes represent
-    data_routes = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/routes.txt", sep=",")
+    # data_routes = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/routes.txt", sep=",")
     #print(data_routes.head())
     #print(data_routes.shape)
 
     data_stop_times = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stop_times.txt", sep=",")
-    #print(data_stop_times.head())
+
+    data_stop_times = data_stop_times.loc[0:70000] #to save some time
+
+    # todo: obviously the formatting below does not work when analysis is done on a line that passes midnight, we should include dates for that
+    data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 24',' 00')
+    data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 25', ' 01')
+    data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 26', ' 02')
+    data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 27', ' 03')
+    data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 28', ' 04')
+    data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 29', ' 05')
+
+    data_stop_times['departure_time'] = data_stop_times['departure_time'].str.replace(' 24', ' 00')
+    data_stop_times['departure_time'] = data_stop_times['departure_time'].str.replace(' 25', ' 01')
+    data_stop_times['departure_time'] = data_stop_times['departure_time'].str.replace(' 26', ' 02')
+    data_stop_times['departure_time'] = data_stop_times['departure_time'].str.replace(' 27', ' 03')
+    data_stop_times['departure_time'] = data_stop_times['departure_time'].str.replace(' 28', ' 04')
+    data_stop_times['departure_time'] = data_stop_times['departure_time'].str.replace(' 29', ' 05')
+
+    data_stop_times['arrival_time'] = pd.to_datetime(today+data_stop_times['arrival_time'],
+                                                     format='%Y-%m-%d %H:%M:%S')
+    data_stop_times['departure_time'] = pd.to_datetime(today+data_stop_times['departure_time'],
+                                                       format='%Y-%m-%d %H:%M:%S')
+
+    #data_stop_times['arrival_time'] = pd.datetime.datetime.combine(today, data_stop_times['arrival_time'])
+
+    print(data_stop_times.head())
     #print(data_stop_times.shape)
 
     # data_stops contains the locations of the bus stops, identified by a stop_id and contains the stop name
-    data_stops = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stops.txt", sep=",")
+    # data_stops = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stops.txt", sep=",")
     #print(data_stops.head())
     #print(data_stops.shape)
 
@@ -124,10 +148,26 @@ def main():
     #print(data_timetables.shape)
 
     # Some trial and error by Jurriaan (doesn't really work)
+    #print(data_bus.iloc[0]['TimeLog'].time())
     #find_arrival(data_stop_times.iloc[0],data_bus)
 
-    pass
+    # data_arrival_times is the table where, for now, we store the actual arrivals for a bus
+    data_arrival_times = data_stop_times.copy()
+    data_arrival_times["real_arr_time"] = ""
 
+    print(data_arrival_times)
+
+    # todo: is there a more efficient way than sending the whole schedule every time?
+
+    test_arrival_time = '21:18:17'
+    test_arrival_time = datetime.datetime.strptime(today+' '+test_arrival_time,'%Y-%m-%d %H:%M:%S')
+
+    test_arrival = ["109",test_arrival_time,'7013_06']
+
+    i = match_arrival(data_stop_times,test_arrival)
+
+
+    pass
 
 
 if __name__ == "__main__":
