@@ -95,7 +95,7 @@ def get_timetable_per_busstop_per_line(busstops_per_line_dict):
         busstops_per_line_dict (dictionary): dictionary with lines as keys and busstops (in a tuple (id, nr)) that the line passes as values
     Returns:
         dictionary with as keys tuples of (line, (stop_id, stop_nr)) and as values the corresponding timetable
-    (Takes some time: ~7500 api requests)
+    (Takes A LOT of time: ~20746 api requests)
     """
     timetable_per_busstop_per_line_dict = dict()
     progress = 0

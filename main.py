@@ -6,11 +6,13 @@ import json
 
 
 def main():
+
     # Example calls from api_requests.py (uncomment and print to see the results):
     # -----------------------
     # df = busestrams_get()
     # -----------------------
     # df = dbstore_get()
+
     # -----------------------
     # retrieving the line list for the Marszałkowska stop  (busstopId = 7009) and bar number 01 (busstopNr = 01) and line 523 (line = 523)
     # df = dbtimetable_get(dict(busstopId='7009', busstopNr='01', line='523'))
@@ -26,33 +28,63 @@ def main():
 
     # ---------------------------------------------------------------------------
     # ---------------------------------------------------------------------------
-    # SOME STUFF TO TRY OUT OTHER STUFF:
+    # START OF THE SCRIPT - DRAFT
 
-    # For each line, get list of busstopId+nr on route
 
-    # Unnecessary, but whatever:
-    # get a list of all lines
-    # all_lines = get_all_lines()
-    # --> saved in all_lines.txt: 342 lines
+    # ---------------------------------------------------------------------------
+    # Only run the following in the morning (start of the day, 4 am?), once:
 
     # get dictionary of lines per busstop
-    # line_dict = get_lines_per_busstop()
-    # line_dict = dict((':'.join(k), v) for k, v in line_dict.items())
-    # with open('lines_per_busstop.json', 'w') as fh:
-    #    json.dump(line_dict, fh, sort_keys=True, indent=4)
-    # --> saved in lines_per_busstop.json
-
+    # RUN ONCE AND THEN SAVE IN FILE! (~7500 API CALLS)
     """
+    line_dict = get_lines_per_busstop()
+    line_dict = dict((':'.join(k), v) for k, v in line_dict.items())
+    with open('lines_per_busstop.json', 'w') as fh:
+       json.dump(line_dict, fh, sort_keys=True, indent=4)
+    # --> saved in lines_per_busstop.json
+    """
+
     with open('lines_per_busstop.json', 'r') as fh:
         my_dict = json.load(fh)
-    test_dict = dict()
+    lines_per_busstop_dict = dict()
     for k in my_dict:
         k_split = k.split(':')
         new_k = (k_split[0], k_split[1])
-        test_dict[new_k] = my_dict[k]
-    busstops_per_line = get_busstops_per_line(test_dict)
+        lines_per_busstop_dict[new_k] = my_dict[k]
+    busstops_per_line = get_busstops_per_line(lines_per_busstop_dict)
     print(busstops_per_line)
-    """
+
+    # get dictionary of timetables per busstop & line
+    # RUN ONCE AND THEN SAVE IN FILE! (~7500 API CALLS)
+    timetable_per_line_and_stop = get_timetable_per_busstop_per_line(busstops_per_line)
+    timetable_per_line_and_stop = dict((k[0] + ':' + ':'.join(k[1]), v.to_json(orient='split')) for k, v in timetable_per_line_and_stop.items())
+    with open('timetable_per_line_and_stop.json', 'w') as fh:
+        json.dump(timetable_per_line_and_stop, fh, indent=4)
+    # --> saved in timetable_per_line_and_stop.json
+
+    with open('timetable_per_line_and_stop.json', 'r') as fh:
+        my_dict = json.load(fh)
+    timetable_per_line_and_stop_dict = dict()
+    for k in my_dict:
+        k_split = k.split(':')
+        new_k = (k_split[0], (k_split[1], k_split[2]))
+        print(my_dict[k])
+        v = pd.read_json(my_dict[k], orient='split')
+        timetable_per_line_and_stop_dict[new_k] = v
+
+    # End of morning run
+    # ---------------------------------------------------------------------------
+
+
+
+
+
+    # END OF THE SCRIPT - DRAFT
+    # ---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
+
+
+
     # timetables = get_timetable_per_busstop_per_line(busstops_per_line)
     # print(timetables)
 
@@ -81,6 +113,7 @@ def main():
         print(dist)
     """
 
+    """ 
     # Importing the bus locations of a specific day (make sure to use the right directory)
     data_bus = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/buses/t_2020_08_31_23_30",
                        sep=";",
@@ -119,13 +152,13 @@ def main():
     # timetables is not a default within the GTFS standard, therefore: if we can avoid using it, that would make it easier to use for other cities
     # TODO: set right column types for the first two columns
     data_timetables = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/timetables.txt", sep=",", header=None)
-    data_timetables.columns = ["line","trip#","stop_lat","stop_long","stop_id","stop_name","time?","code?","number?","stop_nr","number","day/night","platform"]
+    #data_timetables.columns = ["line","trip#","stop_lat","stop_long","stop_id","stop_name","time?","code?","number?","stop_nr","number","day/night","platform"]
     #print(data_timetables.head())
     #print(data_timetables.shape)
 
     # Some trial and error by Jurriaan (doesn't really work)
     #find_arrival(data_stop_times.iloc[0],data_bus)
-
+    """
     pass
 
 
