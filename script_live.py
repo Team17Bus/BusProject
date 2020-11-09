@@ -29,20 +29,22 @@ asb_dict = defaultdict(list)
 
 
 #TODO: create while loop, run from morning until night
-# while(True): # infinite while loop, but use some delay in api calls
+# while(True): # infinite while loop, but use some delay (10s?) in api calls
+
+# to measure execution time --> should not exceed 10 seconds... (or time between subsequent dbstore_get() = live buses calls)
+# currently the execution time is at least 3 minutes.....
 start_time_execution = datetime.now()
 print(f'Start time execution: {start_time_execution.strftime("%H:%M:%S")}')
 
+# get live buses dataframe
 live_buses = busestrams_get()
 with open('live_buses.json', 'w') as fh:
     json.dump(live_buses.to_json(), fh, sort_keys=True, indent=4)
 
-
+# disregard buses from a day ago, and possibly from x minutes ago
 today = date.today()
 now = datetime.now()
-#date = str(today.year) + '-' + str(today.month) + '-' + str(today.day)
-#date_bus_str = (live_buses['Time'].str.split(' ')).apply(lambda x: x[0])
-#date_bus_datetime = date_bus_str.apply(lambda x: datetime.strptime(x, '%Y-%m-%d ').date())
+
 date_bus_datetime = live_buses['Time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
 
 if DISREGARD_X_MINUTES_AGO:
@@ -52,11 +54,9 @@ else:
     date_bus = date_bus_datetime.apply(lambda x: x.date())
     mask = date_bus == today
 
-#time_mask = now() - timedelta(minutes=X_MINUTES)
-#date_mask = date_bus_datetime == today
 live_buses = live_buses[mask]
 
-
+# iterate over each live bus
 for bus in live_buses.itertuples():
     bus_line = bus.Lines
     bus_brigade = bus.Brigade
@@ -108,12 +108,13 @@ for bus in live_buses.itertuples():
                 # del asb_dict[(bus_line, bus_brigade, s)]
                 # compare arrival time with timetable --> get delay
                 print(f'line: {bus_line}, brigade: {bus_brigade}, vehicle number: {bus_vehicle_no}, stop: {s} -- {asb_dict[((bus_line, bus_brigade), (s[0], s[1]))]}')
-                #del asb_dict[((bus_line, bus_brigade), (s[0], s[1]))]
+                del asb_dict[((bus_line, bus_brigade), (s[0], s[1]))]
 
         else:
             if dist < DISTANCE_THRESHOLD:   # bus is only interesting if it is within a certain distance of a stop --> create asb
                 asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))].append({'time': bus.Time, 'coord': bus_coord})
 
+# Execution time
 end_time_execution = datetime.now()
 print(f'End time execution: {end_time_execution.strftime("%H:%M:%S")}')
 print(f'Number of seconds passed between start and end of execution: {(end_time_execution - start_time_execution).seconds}')
