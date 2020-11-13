@@ -1,0 +1,69 @@
+See also: script_live.py (and maybe asb.py)
+Note: I put _..._ on both sides of variables
+
+
+make sure to
+import asb
+
+# set up a python dictionary that holds the reported coordinates of _bus_ when _bus_ is within R meters of _S_:
+asb_dict = defaultdict(list)
+
+Do the following for each 'live' bus (that is driving 'at the moment' and reports a gps location -- call such a bus: _bus_):
+
+    For each busstop _S_ that is on the route of _bus_:
+
+            # check whether _bus_ has been in the proximity of _S_ before
+            if _bus_, _S_ in asb_dict:      #yes, this is not the first time
+
+                # check whether _bus_ is still in the proximity (within R=300 meters) of _S_
+                if distance between _S_ and _bus_ < R:     #note: we take R = 300 for now
+
+                    # Add the gps location and time reported of the bus to the asb dict
+                    asb_dict[(_bus_info_, _S_].append({'time': bus.Time, 'coord': bus_coord})
+
+                # case for which _bus_ has left the proximity of _S_ --> complete ASB!
+                else:
+
+                    # get the coordinates (in tuple (latitude, longitude)) for which _bus_ entered the proximity of _S_ for the first time
+                    _A_ = asb_dict[(_bus_info_, _S_][0]['coord']
+
+                    # get the coordinates (in tuple (latitude, longitude)) for which _bus_ was in the proximity of _S_ last
+                    _B_ = asb_dict[(_bus_info_, _S_][-1]['coord']
+
+                    # line that bisects lines AS and BS
+                    _angle_bisector_ = asb.get_angle_bisector(_A_, _S_, _B_)
+
+                    # for each recording in the asb_dict, check whether the coordinate has passed the angle_bisector relative to _A_
+                    _index_past_bisector_ = 0
+                    for i in range(len(asb_dict[(_bus_info_, _S_])):
+                        _coord_ = asb_dict[(_bus_info_, _S_][0]['coord']
+                        if asb.is_past_angle_bisector(_A_, _coord_, _angle_bisector_):
+                            # BINGO! first coordinate just past the angle bisector
+                            _index_past_bisector_ = i
+                            _index_before_bisector_ = i-1
+                            # break out of for loop
+                            break
+
+                    _time_before_S_ = asb_dict[(_bus_info_, _S_][_index_before_bisector_]['time']
+                    _time_after_S_ = asb_dict[(_bus_info_, _S_][_index_past_bisector_]['time']
+
+                    # THE ESTIMATION OF THE TIME AT _S_
+                    # Note: could do something more advanced than this (e.g. proportional to the distance to _S_
+                    # -- for now just taking the average of the times
+                    _time_at_S_ = (_time_after_S_ + _time_before_S_) / 2
+
+                    # dictionary is not needed anymore and should be deleted
+                    del asb_dict[(_bus_info_, _S_]
+
+
+            else:  #(first time _bus_ is possibly in the proximity of _S_)
+
+                # check whether _bus_ is actually in the proximity of _S_
+                if distance between _S_ and _bus_ < R:
+
+                    # Add the gps location and time reported of the bus to the asb dict
+                    asb_dict[(_bus_info_, _S_].append({'time': bus.Time, 'coord': bus_coord})
+
+                # otherwise, do nothing
+
+
