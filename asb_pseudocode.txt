@@ -43,7 +43,8 @@ Do the following for each 'live' bus (that is driving 'at the moment' and report
                     _A_ = asb_dict[(_bus_info_, _S_][0]['coord']
 
                     # get the coordinates (in tuple (latitude, longitude)) for which _bus_ was in the proximity of _S_ last
-                    _B_ = asb_dict[(_bus_info_, _S_][-1]['coord']
+                    # Note the index '-2' gets the one-but-last entry of the list
+                    _B_ = asb_dict[(_bus_info_, _S_][-2]['coord']
 
                     # line that bisects lines AS and BS
                     _angle_bisector_ = asb.get_angle_bisector(_A_, _S_, _B_)
