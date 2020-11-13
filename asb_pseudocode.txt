@@ -1,9 +1,23 @@
 See also: script_live.py (and maybe asb.py)
 Note: I put _..._ on both sides of variables
 
+Look at
+- processing.py for coord_distance function
+- script_live.py for implementation on live data (haven't actually called the asb function yet here)
+- script_start.py for how to get lists of busstops for each line
+
 
 make sure to
 import asb
+import processing
+
+
+# FIRST THING TO DO: get a list of busstops for every line (look at get_busstops_per_line in processing.py)
+# Recommendation: store this in a python dictionary
+# busstops_per_line
+# which has 'line' as keys
+# and a list of busstop ids as values
+# e.g. busstops_per_line['213'] = [1001_01, 1004_02, ...]
 
 # set up a python dictionary that holds the reported coordinates of _bus_ when _bus_ is within R meters of _S_:
 asb_dict = defaultdict(list)
@@ -16,6 +30,7 @@ Do the following for each 'live' bus (that is driving 'at the moment' and report
             if _bus_, _S_ in asb_dict:      #yes, this is not the first time
 
                 # check whether _bus_ is still in the proximity (within R=300 meters) of _S_
+                # Note: get the distance with processing.coord_distance(_bus_, _S_)
                 if distance between _S_ and _bus_ < R:     #note: we take R = 300 for now
 
                     # Add the gps location and time reported of the bus to the asb dict
