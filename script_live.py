@@ -17,7 +17,7 @@ save_estimations_to_file = True
 with open('busstops_per_line.json', 'r') as fh:
     busstops_per_line_dict = json.load(fh)
 
-''' 
+""" 
 with open('timetable_per_line_and_stop.json', 'r') as fh:
     my_dict = json.load(fh)
 timetable_per_line_and_stop_dict = dict()
@@ -26,7 +26,12 @@ for k in my_dict:
     new_k = (k_split[0], (k_split[1], k_split[2]))
     v = pd.read_json(my_dict[k], orient='split')
     timetable_per_line_and_stop_dict[new_k] = v
-'''
+"""
+
+if save_estimations_to_file:
+    with open('arrival_estimations.csv', 'a') as arrival_times:
+        arrival_writer = csv.writer(arrival_times, delimiter=',', quotechar='"')
+        arrival_writer.writerow(['bus_line', 'bus_brigade', 'bus_vehicle_no', 'stop_zespol', 'stop_slupek', 'stop_coord', 'estimated_arrival', 'scheduled_arrival'])
 
 stop_locations = dbstore_get()
 
@@ -37,6 +42,8 @@ asb_dict = defaultdict(list)
 # while(True): # infinite while loop, but use some delay (10s?) in api calls
 
 execution_time = 10
+
+arrival_time_estimations = []
 
 while(True):
 
@@ -130,7 +137,9 @@ while(True):
                     # get the coordinates (in tuple (latitude, longitude)) for which _bus_ was in the proximity of _S_ last
                     # Note the index '-2' gets the one-but-last entry of the list
                     if len(asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]) == 1:
-                        print(f'JUST ONE POINT -- TIME = {asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]["time"]}')
+                        arrival_time = asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]["time"]
+                        print(f'JUST ONE POINT -- TIME = {arrival_time}')
+                        arrival_time_estimations.append([bus_line, bus_brigade, bus_vehicle_no, s[0], s[1], stop_coord_float, arrival_time, None])
                         del asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]
                         continue
                     else:
@@ -140,13 +149,13 @@ while(True):
                         print(f'TWO POINTS -- take average of A and B = {asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]["time"]}')
 
                         #average A and B for final time
-                        ts1 = asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][1]['time']
+                        ts1 = asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]['time']
                         ts2 = asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][1]['time']
                         ts1_date = datetime.strptime(ts1, '%Y-%m-%d %H:%M:%S')
                         ts2_date = datetime.strptime(ts2, '%Y-%m-%d %H:%M:%S')
                         average_delta = (ts2_date - ts1_date) / 2
-                        average_ts = ts1_date + average_delta
-
+                        arrival_time = ts1_date + average_delta
+                        arrival_time_estimations.append([bus_line, bus_brigade, bus_vehicle_no, s[0], s[1], stop_coord_float, arrival_time, None])
                         del asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]
                         continue
 
@@ -167,7 +176,9 @@ while(True):
                             break
                     if not some_coord_past_bisector: # can happen when there are duplicate items in the list or bus is sitting at exact same location
                     # just take the time of entering the radius (might be somewhat optimistic but not a big problem)
-                        print(asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]['time'])
+                        arrival_time = asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]['time']
+                        print(f' NO COORDS PAST BISECTOR -- {arrival_time}')
+                        arrival_time_estimations.append([bus_line, bus_brigade, bus_vehicle_no, s[0], s[1], stop_coord_float, arrival_time, None])
                         del asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]
                         continue
 
@@ -181,15 +192,19 @@ while(True):
                     print('TIME BEFORE AND AFTER BUSSTOP')
                     print(time_before_S)
                     print(time_after_S)
-                    #time_at_S = (time_after_S + time_before_S) / 2
-
+                    ts1_date = datetime.strptime(time_before_S, '%Y-%m-%d %H:%M:%S')
+                    ts2_date = datetime.strptime(time_after_S, '%Y-%m-%d %H:%M:%S')
+                    average_delta = (ts2_date - ts1_date) / 2
+                    arrival_time = ts1_date + average_delta
+                    arrival_time_estimations.append(
+                        [bus_line, bus_brigade, bus_vehicle_no, s[0], s[1], stop_coord_float, arrival_time, None])
                     # dictionary is not needed anymore and should be deleted
                     del asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]
 
                     #TODO
                     # del asb_dict[(bus_line, bus_brigade, s)]
                     # compare arrival time with timetable --> get delay
-                    print(f'line: {bus_line}, brigade: {bus_brigade}, vehicle number: {bus_vehicle_no}, stop: {s} -- {asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]}')
+                    print(f'line: {bus_line}, brigade: {bus_brigade}, vehicle number: {bus_vehicle_no}, stop: {s}')
                     #del asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]
 
             else:
@@ -202,6 +217,15 @@ while(True):
     execution_time = (end_time_execution - start_time_execution).seconds
     print(f'Number of seconds passed between start and end of execution: {execution_time}')
     print(f'asb_dict: {asb_dict}')
+
+    # save estimations to file
+    if save_estimations_to_file:
+        with open('arrival_estimations.csv', 'a') as arrival_times:
+            arrival_writer = csv.writer(arrival_times, delimiter=',', quotechar='"')
+            for i in range(len(arrival_time_estimations)):
+                arrival_writer.writerow(arrival_time_estimations[i])
+        arrival_time_estimations.clear()
+
 
 
 
