@@ -97,6 +97,7 @@ def busestrams_get(other_params=None, return_pd=True):
         other_params(dict): for specifying the other parameters to be included in the api request
         return_pd(boolean): True if user wants to return a pandas dataframe, False if user wants a json object
     Returns:
+        True or False whether response was OK (200)
         json object or pandas dataframe obtained by the api request
     Example call:
         busestrams_get(dict(type=1))
@@ -109,10 +110,16 @@ def busestrams_get(other_params=None, return_pd=True):
     other_params['apikey'] = API_KEY
     other_params['type'] = '1'
     r = make_request(end_link, other_params)
-    if return_pd:
-        return pd.DataFrame(r.json()['result'])
+    if r.ok:
+        r_json = r.json()['result']
+        if isinstance(r_json, str):
+            return False, None
+        if return_pd:
+            return True, pd.DataFrame(r.json()['result'])
+        else:
+            return r.json()
     else:
-        return r.json()
+        return False, None
 
 
 def dbstore_get(other_params=None, return_pd=True):

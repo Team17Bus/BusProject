@@ -5,6 +5,9 @@ from math import radians, cos, sin, asin, sqrt
 import api_requests as api
 from collections import defaultdict
 
+def coord_dist_pythagoras(coord1, coord2):
+    return sqrt((coord2[0] - coord1[0]) ** 2 + (coord2[1] - coord1[1]) ** 2)
+
 def coord_distance(coord1, coord2):
     """
     CREDITS TO GEEKSFORGEEKS.ORG: https://www.geeksforgeeks.org/program-distance-two-points-earth/

@@ -93,7 +93,7 @@ def is_past_angle_bisector(A, coord, angle_bisector):
     :param A: (latitude, longitude) tuple --  the coordinates where the bus is coming from (coordinates of when the bus
     enters the circle around the busstop for the first time)
     :param coord: (latitude, longitude) tuple -- the coordinates for which we want to check
-    whether it is on the other side of the line compared to a or not
+    whether it is on the other side of the line compared to A or not
     :param angle_bisector: (a, b, c) tuple -- parameters of the equation of the angle bisector
     :return: True if coord is on the other side of the line compared to A, False otherwise
     """
