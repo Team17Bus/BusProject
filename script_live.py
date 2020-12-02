@@ -8,6 +8,9 @@ import asb
 from time import sleep
 import csv
 
+time_start = datetime.now()
+
+RUN_FOR = 100 # seconds
 DISTANCE_THRESHOLD = 300    # in meters
 DISREGARD_X_MINUTES_AGO = True  # disregard buses that have timestamp x minutes ago
 X_MINUTES = 25
@@ -226,7 +229,11 @@ while(True):
             for i in range(len(arrival_time_estimations)):
                 arrival_writer.writerow(arrival_time_estimations[i])
         arrival_time_estimations.clear()
-
+    
+    # Exit if time RUN_FOR has exceeded
+    total_execution_time = (end_time_execution - time_start).seconds
+    if (total_execution_time) >= RUN_FOR:
+        break
 
 
 
