@@ -77,10 +77,11 @@ while(True):
 
     live_buses = live_buses[mask]
 
-    live_buses = live_buses[live_buses['Lines'] == '213']
+    live_buses = live_buses[live_buses['Lines'].isin(['213', 'L39', '702'])]
 
     # iterate over each live bus
     for bus in live_buses.itertuples():
+        print(bus)
         bus_line = bus.Lines
         bus_brigade = bus.Brigade
         bus_coord = (bus.Lat, bus.Lon)
