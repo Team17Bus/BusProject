@@ -10,12 +10,16 @@ import csv
 import sys
 
 num_args = len(sys.argv) # provide lines as arguments
-print(sys.argv)
+print(num_args)
+
+if num_args > 2:
+    line_numbers = sys.argv[2].split(',')
+    print(line_numbers)
 
 time_start = datetime.now()
 
 RUN_FOR = 99999999 # seconds
-if (num_args > 1):
+if num_args > 1:
     RUN_FOR = int(sys.argv[1])
 DISTANCE_THRESHOLD = 300    # in meters
 DISREGARD_X_MINUTES_AGO = True  # disregard buses that have timestamp x minutes ago
@@ -86,9 +90,8 @@ while(True):
 
     #line_list = ['213', 'L39', '702']
     if num_args > 2:
-        line_list = sys.argv[2:]
-        if debug: print(line_list)
-        live_buses = live_buses[live_buses['Lines'].isin(line_list)]
+        if debug: print(line_numbers)
+        live_buses = live_buses[live_buses['Lines'].isin(line_numbers)]
 
     # iterate over each live bus
     for bus in live_buses.itertuples():
