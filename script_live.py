@@ -7,6 +7,10 @@ from datetime import date, datetime, timedelta
 import asb
 from time import sleep
 import csv
+import sys
+
+num_lines = len(sys.argv) # provide lines as arguments
+print(sys.argv)
 
 time_start = datetime.now()
 
@@ -80,7 +84,11 @@ while(True):
 
     live_buses = live_buses[mask]
 
-    live_buses = live_buses[live_buses['Lines'].isin(['213', 'L39', '702'])]
+    line_list = ['213', 'L39', '702']
+    if num_lines > 1:
+        line_list = sys.argv[1:]
+        print(line_list)
+    live_buses = live_buses[live_buses['Lines'].isin(line_list)]
 
     # iterate over each live bus
     for bus in live_buses.itertuples():
