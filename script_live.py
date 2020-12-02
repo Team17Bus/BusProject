@@ -23,6 +23,8 @@ X_MINUTES = 25
 
 save_estimations_to_file = True
 
+debug = False
+
 with open('busstops_per_line.json', 'r') as fh:
     busstops_per_line_dict = json.load(fh)
 
@@ -46,10 +48,6 @@ stop_locations = dbstore_get()
 
 asb_dict = defaultdict(list)
 
-
-#TODO: create while loop, run from morning until night
-# while(True): # infinite while loop, but use some delay (10s?) in api calls
-
 execution_time = 10
 
 arrival_time_estimations = []
@@ -62,7 +60,7 @@ while(True):
     # to measure execution time --> should not exceed 10 seconds... (or time between subsequent dbstore_get() = live buses calls)
     # currently the execution time is at least 3 minutes.....
     start_time_execution = datetime.now()
-    print(f'Start time execution: {start_time_execution.strftime("%H:%M:%S")}')
+    if debug: print(f'Start time execution: {start_time_execution.strftime("%H:%M:%S")}')
 
     # get live buses dataframe
     response, live_buses = busestrams_get()
@@ -89,12 +87,12 @@ while(True):
     #line_list = ['213', 'L39', '702']
     if num_args > 2:
         line_list = sys.argv[2:]
-        print(line_list)
+        if debug: print(line_list)
         live_buses = live_buses[live_buses['Lines'].isin(line_list)]
 
     # iterate over each live bus
     for bus in live_buses.itertuples():
-        print(bus)
+        if debug: print(bus)
         bus_line = bus.Lines
         bus_brigade = bus.Brigade
         bus_coord = (bus.Lat, bus.Lon)
@@ -102,7 +100,7 @@ while(True):
         if bus_line in busstops_per_line_dict:
             stop_list = busstops_per_line_dict[bus_line]
         else:   # if bus line not in busstops_per_line_dict, disregard (should barely happen)
-            print(f'bus_line {bus_line} not in busstops_per_line_dict')
+            if debug: print(f'bus_line {bus_line} not in busstops_per_line_dict')
             continue
 
         for s in stop_list:     # check only the stops on the bus' route
@@ -111,7 +109,7 @@ while(True):
             stop_row = stop_locations[mask1 & mask2]
 
             if stop_row.empty:  # if bus stop could not be found -- shouldn't happen
-                print('Bus stop could not be found in dbstore_get')
+                if debug: print('Bus stop could not be found in dbstore_get')
                 continue
 
             if (len(stop_row) > 1): # take the entry that is valid (obowiazuje_od) (sometimes there are multiple stops with the same slupek and zespol...)
@@ -152,7 +150,7 @@ while(True):
                     # Note the index '-2' gets the one-but-last entry of the list
                     if len(asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]) == 1:
                         arrival_time = asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]["time"]
-                        print(f'JUST ONE POINT -- TIME = {arrival_time}')
+                        if debug: print(f'JUST ONE POINT -- TIME = {arrival_time}')
                         arrival_time_estimations.append([bus_line, bus_brigade, bus_vehicle_no, s[0], s[1], stop_coord_float, arrival_time, None])
                         del asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]
                         continue
@@ -160,7 +158,7 @@ while(True):
                         B = asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][-2]['coord']
 
                     if len(asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]) == 2:
-                        print(f'TWO POINTS -- take average of A and B = {asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]["time"]}')
+                        if debug: print(f'TWO POINTS -- take average of A and B = {asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]["time"]}')
 
                         #average A and B for final time
                         ts1 = asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]['time']
@@ -191,7 +189,7 @@ while(True):
                     if not some_coord_past_bisector: # can happen when there are duplicate items in the list or bus is sitting at exact same location
                     # just take the time of entering the radius (might be somewhat optimistic but not a big problem)
                         arrival_time = asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))][0]['time']
-                        print(f' NO COORDS PAST BISECTOR -- {arrival_time}')
+                        if debug: print(f' NO COORDS PAST BISECTOR -- {arrival_time}')
                         arrival_time_estimations.append([bus_line, bus_brigade, bus_vehicle_no, s[0], s[1], stop_coord_float, arrival_time, None])
                         del asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]
                         continue
@@ -203,9 +201,9 @@ while(True):
                     # THE ESTIMATION OF THE TIME AT _S_
                     # Note: could do something more advanced than this (e.g. proportional to the distance to _S_
                     # -- for now just taking the average of the times
-                    print('TIME BEFORE AND AFTER BUSSTOP')
-                    print(time_before_S)
-                    print(time_after_S)
+                    if debug: print('TIME BEFORE AND AFTER BUSSTOP')
+                    if debug: print(time_before_S)
+                    if debug: print(time_after_S)
                     ts1_date = datetime.strptime(time_before_S, '%Y-%m-%d %H:%M:%S')
                     ts2_date = datetime.strptime(time_after_S, '%Y-%m-%d %H:%M:%S')
                     average_delta = (ts2_date - ts1_date) / 2
@@ -218,7 +216,7 @@ while(True):
                     #TODO
                     # del asb_dict[(bus_line, bus_brigade, s)]
                     # compare arrival time with timetable --> get delay
-                    print(f'line: {bus_line}, brigade: {bus_brigade}, vehicle number: {bus_vehicle_no}, stop: {s}')
+                    if debug: print(f'line: {bus_line}, brigade: {bus_brigade}, vehicle number: {bus_vehicle_no}, stop: {s}')
                     #del asb_dict[((bus_line, bus_brigade, bus_vehicle_no), (s[0], s[1]))]
 
             else:
@@ -227,10 +225,10 @@ while(True):
 
     # Execution time
     end_time_execution = datetime.now()
-    print(f'End time execution: {end_time_execution.strftime("%H:%M:%S")}')
+    if debug: print(f'End time execution: {end_time_execution.strftime("%H:%M:%S")}')
     execution_time = (end_time_execution - start_time_execution).seconds
     print(f'Number of seconds passed between start and end of execution: {execution_time}')
-    print(f'asb_dict: {asb_dict}')
+    if debug: print(f'asb_dict: {asb_dict}')
 
     # save estimations to file
     if save_estimations_to_file:
