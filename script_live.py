@@ -10,7 +10,6 @@ import csv
 import sys
 
 num_args = len(sys.argv) # provide lines as arguments
-print(num_args)
 
 if num_args > 2:
     line_numbers = sys.argv[2].split(',')
@@ -42,11 +41,12 @@ for k in my_dict:
     v = pd.read_json(my_dict[k], orient='split')
     timetable_per_line_and_stop_dict[new_k] = v
 """
-
+"""
 if save_estimations_to_file:
     with open('arrival_estimations.csv', 'a') as arrival_times:
         arrival_writer = csv.writer(arrival_times, delimiter=',', quotechar='"')
         arrival_writer.writerow(['bus_line', 'bus_brigade', 'bus_vehicle_no', 'stop_zespol', 'stop_slupek', 'stop_coord', 'estimated_arrival', 'scheduled_arrival'])
+"""
 
 stop_locations = dbstore_get()
 
@@ -230,7 +230,7 @@ while(True):
     end_time_execution = datetime.now()
     if debug: print(f'End time execution: {end_time_execution.strftime("%H:%M:%S")}')
     execution_time = (end_time_execution - start_time_execution).seconds
-    print(f'Number of seconds passed between start and end of execution: {execution_time}')
+    print(f'{execution_time}')
     if debug: print(f'asb_dict: {asb_dict}')
 
     # save estimations to file
