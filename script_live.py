@@ -243,8 +243,8 @@ while (True):
     if debug: print(f'asb_dict: {asb_dict}')
 
     if save_execution_times_to_file:
-        with open('execution_times.json', 'a') as ex_times:
-            json.dump({':'.join(line_numbers): execution_time}, ex_times)
+        with open('execution_times.txt', 'a') as ex_times:
+            ex_times.write(str(line_numbers) + ':' + str(execution_time) + '\n')
 
     # save estimations to file
     if save_estimations_to_file:
