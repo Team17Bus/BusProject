@@ -3,8 +3,8 @@
 #SBATCH --job-name=run_all_lines.job
 #SBATCH --output=run.out                      
 #SBATCH --error=run.err                       
-#SBATCH --time=00:10:00                         
-#SBATCH --mem=200                               
+#SBATCH --time=01:20:00                         
+#SBATCH --mem=2G                            
 #SBATCH --qos=normal
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=evavanspam@gmail.com    
@@ -15,4 +15,4 @@ LINES=(1,10,102,103,104,105,106,107,108,109,11,110,111,112,114 115,116,117,118,1
 
 
 arg=${LINES[`expr $SLURM_ARRAY_TASK_ID % ${#LINES[@]}`]}
-python3 script_live.py 360 $arg
+python3 script_live.py 3600 $arg
