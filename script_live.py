@@ -9,11 +9,13 @@ from time import sleep
 import csv
 import sys
 
+debug = False
+
 num_args = len(sys.argv)  # provide lines as arguments
 
 if num_args > 2:
     line_numbers = sys.argv[2].split(',')
-    print(line_numbers)
+    if debug: print(line_numbers)
 
 time_start = datetime.now()
 
@@ -25,8 +27,7 @@ DISREGARD_X_MINUTES_AGO = True  # disregard buses that have timestamp x minutes 
 X_MINUTES = 25
 
 save_estimations_to_file = True
-
-debug = False
+save_execution_times_to_file = True
 
 with open('busstops_per_line.json', 'r') as fh:
     busstops_per_line_dict = json.load(fh)
@@ -116,8 +117,7 @@ while (True):
                 if debug: print('Bus stop could not be found in dbstore_get')
                 continue
 
-            if (len(
-                    stop_row) > 1):  # take the entry that is valid (obowiazuje_od) (sometimes there are multiple stops with the same slupek and zespol...)
+            if (len(stop_row) > 1):  # take the entry that is valid (obowiazuje_od) (sometimes there are multiple stops with the same slupek and zespol...)
                 valid_from = (stop_row['obowiazuje_od'].str.split(' ')).apply(lambda x: x[0])
                 valid_from_datetime = (valid_from.str.split('-')).apply(lambda x: date(int(x[0]), int(x[1]), int(x[2])))
                 valid_from_datetime = valid_from_datetime[today >= valid_from_datetime]
@@ -239,8 +239,12 @@ while (True):
     end_time_execution = datetime.now()
     if debug: print(f'End time execution: {end_time_execution.strftime("%H:%M:%S")}')
     execution_time = (end_time_execution - start_time_execution).seconds
-    print(f'{execution_time}')
+    if debug: print(f'{execution_time}')
     if debug: print(f'asb_dict: {asb_dict}')
+
+    if save_execution_times_to_file:
+        with open('execution_times.json', 'a') as ex_times:
+            json.dump({':'.join(line_numbers): execution_time}, ex_times)
 
     # save estimations to file
     if save_estimations_to_file:
