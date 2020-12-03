@@ -43,10 +43,12 @@ for k in my_dict:
     timetable_per_line_and_stop_dict[new_k] = v
 """
 
+""" 
 if save_estimations_to_file:
     with open('arrival_estimations.csv', 'a') as arrival_times:
         arrival_writer = csv.writer(arrival_times, delimiter=',', quotechar='"')
         arrival_writer.writerow(['bus_line', 'bus_brigade', 'bus_vehicle_no', 'stop_zespol', 'stop_slupek', 'stop_coord', 'estimated_arrival', 'scheduled_arrival'])
+"""
 
 stop_locations = dbstore_get()
 
