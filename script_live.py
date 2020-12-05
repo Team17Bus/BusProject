@@ -58,6 +58,14 @@ execution_time = 10
 
 arrival_time_estimations = []
 
+# take out datetime objects that are of weird format
+# e.g. 2020-12-04 08:52:-12-04 08:52:05 or 2020-1223:46:34 (found on live data, happens every hour or so)
+def function(x):
+    try:
+        return datetime.strptime(x, '%Y-%m-%d %H:%M:%S')
+    except ValueError:
+        return None
+
 while (True):
 
     if execution_time < 10:
@@ -79,7 +87,10 @@ while (True):
     today = date.today()
     now = datetime.now()
 
-    date_bus_datetime = live_buses['Time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+    date_bus_datetime = live_buses['Time'].apply(lambda x: function(x))
+    null_indices = pd.isnull(date_bus_datetime)
+    live_buses = live_buses[~null_indices]
+    date_bus_datetime = date_bus_datetime[~null_indices]
 
     if DISREGARD_X_MINUTES_AGO:
         datetime_x_minutes_ago = now - timedelta(minutes=X_MINUTES)
