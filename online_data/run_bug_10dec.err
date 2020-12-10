@@ -1,0 +1,110 @@
+Traceback (most recent call last):
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connection.py", line 170, in _new_conn
+    (self._dns_host, self.port), self.timeout, **extra_kw
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/util/connection.py", line 73, in create_connection
+    for res in socket.getaddrinfo(host, port, family, socket.SOCK_STREAM):
+  File "/usr/lib64/python3.6/socket.py", line 745, in getaddrinfo
+    for res in _socket.getaddrinfo(host, port, family, type, proto, flags):
+socket.gaierror: [Errno -3] Temporary failure in name resolution
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 706, in urlopen
+    chunked=chunked,
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 382, in _make_request
+    self._validate_conn(conn)
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 1010, in _validate_conn
+    conn.connect()
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connection.py", line 353, in connect
+    conn = self._new_conn()
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connection.py", line 182, in _new_conn
+    self, "Failed to establish a new connection: %s" % e
+urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPSConnection object at 0x2acc9d471e48>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 756, in urlopen
+    method, url, error=e, _pool=self, _stacktrace=sys.exc_info()[2]
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/util/retry.py", line 573, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.um.warszawa.pl', port=443): Max retries exceeded with url: /api/action/busestrams_get?resource_id=f2e5503e-927d-4ad3-9500-4ab9e55deb59&apikey=07c5b7fe-c2ab-4784-b18c-d174f570caa5&type=1 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x2acc9d471e48>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution',))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "script_live.py", line 80, in <module>
+    response, live_buses = busestrams_get()
+  File "/rwthfs/rz/cluster/home/si537161/BusProject/BusProject/api_requests.py", line 112, in busestrams_get
+    r = make_request(end_link, other_params)
+  File "/rwthfs/rz/cluster/home/si537161/BusProject/BusProject/api_requests.py", line 31, in make_request
+    response = requests.get(url, params=params)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/api.py", line 76, in get
+    return request('get', url, params=params, **kwargs)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/sessions.py", line 542, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/sessions.py", line 655, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/adapters.py", line 516, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.um.warszawa.pl', port=443): Max retries exceeded with url: /api/action/busestrams_get?resource_id=f2e5503e-927d-4ad3-9500-4ab9e55deb59&apikey=07c5b7fe-c2ab-4784-b18c-d174f570caa5&type=1 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x2acc9d471e48>: Failed to establish a new connection: [Errno -3] Temporary failure in name resolution',))
+Traceback (most recent call last):
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connection.py", line 170, in _new_conn
+    (self._dns_host, self.port), self.timeout, **extra_kw
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/util/connection.py", line 96, in create_connection
+    raise err
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/util/connection.py", line 86, in create_connection
+    sock.connect(sa)
+TimeoutError: [Errno 110] Connection timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 706, in urlopen
+    chunked=chunked,
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 382, in _make_request
+    self._validate_conn(conn)
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 1010, in _validate_conn
+    conn.connect()
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connection.py", line 353, in connect
+    conn = self._new_conn()
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connection.py", line 182, in _new_conn
+    self, "Failed to establish a new connection: %s" % e
+urllib3.exceptions.NewConnectionError: <urllib3.connection.HTTPSConnection object at 0x2b49ef090048>: Failed to establish a new connection: [Errno 110] Connection timed out
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/adapters.py", line 449, in send
+    timeout=timeout
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/connectionpool.py", line 756, in urlopen
+    method, url, error=e, _pool=self, _stacktrace=sys.exc_info()[2]
+  File "/home/si537161/.local/lib/python3.6/site-packages/urllib3/util/retry.py", line 573, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='api.um.warszawa.pl', port=443): Max retries exceeded with url: /api/action/busestrams_get?resource_id=f2e5503e-927d-4ad3-9500-4ab9e55deb59&apikey=07c5b7fe-c2ab-4784-b18c-d174f570caa5&type=1 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x2b49ef090048>: Failed to establish a new connection: [Errno 110] Connection timed out',))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "script_live.py", line 80, in <module>
+    response, live_buses = busestrams_get()
+  File "/rwthfs/rz/cluster/home/si537161/BusProject/BusProject/api_requests.py", line 112, in busestrams_get
+    r = make_request(end_link, other_params)
+  File "/rwthfs/rz/cluster/home/si537161/BusProject/BusProject/api_requests.py", line 31, in make_request
+    response = requests.get(url, params=params)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/api.py", line 76, in get
+    return request('get', url, params=params, **kwargs)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/api.py", line 61, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/sessions.py", line 542, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/sessions.py", line 655, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/si537161/.local/lib/python3.6/site-packages/requests/adapters.py", line 516, in send
+    raise ConnectionError(e, request=request)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='api.um.warszawa.pl', port=443): Max retries exceeded with url: /api/action/busestrams_get?resource_id=f2e5503e-927d-4ad3-9500-4ab9e55deb59&apikey=07c5b7fe-c2ab-4784-b18c-d174f570caa5&type=1 (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x2b49ef090048>: Failed to establish a new connection: [Errno 110] Connection timed out',))
