@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "script_start.py", line 22, in <module>
+    timetable_per_line_and_stop = get_timetable_per_busstop_per_line(busstops_per_line)
+  File "/rwthfs/rz/cluster/home/vt566076/BusProject/processing.py", line 110, in get_timetable_per_busstop_per_line
+    timetable = api.dbtimetable_get({'busstopId': stop_id, 'busstopNr': stop_nr, 'line': line})
+  File "/rwthfs/rz/cluster/home/vt566076/BusProject/api_requests.py", line 197, in dbtimetable_get
+    return dict_json_to_pd(r_json)
+  File "/rwthfs/rz/cluster/home/vt566076/BusProject/api_requests.py", line 63, in dict_json_to_pd
+    entry = data[i]['values']
+TypeError: string indices must be integers
