@@ -1,61 +1,132 @@
-import datetime
+import pandas as pd
+
+from datetime import timedelta
 
 debug = True
 
-def match_arrival(schedule, arrival):
-    """
 
-    Args:
-        schedule: the schedule for the day (pre-processed and cleaned up)
-        arrival: the particular arrival event for which the scheduled arrival time needs to be estimated
-        in the following format: [line, arrival time, stop_id]
+def match_schedule(schedule, arrivals):
 
-    Returns: schedule with the added actual arrival time
+    line_grouped = arrivals.groupby(['bus_line'])
 
-    """
+    for line, line_group in line_grouped:
+        if debug: print(line)
 
-    # line_schedule is the part of the schedule that contains only the schedule for the particular line
+        grouped = line_group.groupby(['bus_brigade'])
+        indexes_to_delete = []
 
-    line_schedule = schedule[schedule['trip_id'].str.contains(arrival[0 ] +'_')]
+        for brig, group in grouped:  # the grouping by does not make the algorithm particularly faster
 
-    i = -1
+            if debug: print("Next Group")
+            if not debug: print(line,'+',brig)
 
-    # Check for exact match
-    # the checking for i != 0 is there to check if we do not have more than one corresponding arrival event
-    for index, row in line_schedule.iterrows():
-        if row['arrival_time'] == arrival[1] and row['stop_id'] == arrival[2]:
-            if i != 1:
-                row['real_arr_time'] = arrival[1] # todo: add some check if there is not a value stored yet,
-                                                    # this should throw an error. As this means that we want to match
-                                                    # two actual arrivals with one scheduled arrival
-                if debug: print('exact match found', row)
-            else:
-                print('multiple exact matches have been found')
+            prev_ind_i = []
+            prev_stop_seq = []
 
-    if i == -1: print('no exact match found')
-    else: return schedule
+            this_ind_i = []
+            this_stop_seq = []
+            this_stop_zespol = ""
 
-    # find the scheduled arrival time that is closest (in absolute value) to the real arrival time
+            for ind_i, row_i in group.iterrows():
 
-    # assuming the biggest dalay that can occur in a file is 2 hours
-    old_difference = datetime.timedelta(hours= 2)
+                stop_seq = ""
+                prev_scheduled_time = None
 
-    for index, row in line_schedule.iterrows():
-        if row['stop_id'] == arrival[2]:
-            difference = row['arrival_time'] - arrival[1]
+                # print(f"ind = {ind_i}    stop = {row_i['stop_zespol']}")
+                #print(this_stop_zespol) #up to here similar performance
 
-            # make sure to only have positive differences todo: is this valid
-            if difference < (arrival[1] - row['arrival_time']):
-                difference = arrival[1] - row['arrival_time']
+                if not this_stop_zespol:  # zespol is not yet identified
+                    this_stop_zespol = row_i['stop_zespol']
+                    this_ind_i.append(ind_i)
+                elif this_stop_zespol == row_i['stop_zespol']:  # zespol has not changed
+                    this_ind_i.append(ind_i)
+                else:  # arrived at the next zespol
+                    # (figure out which of all the previously recorded slupek's is the correct one)
 
-            # if this difference is smaller than the previous one, store the arrival time
-            if difference < old_difference:
-                old_difference = difference
-                row['real_arr_time'] = arrival[1]
-                if debug: print('Closest arrival: ', row['arrival_time'], arrival[1])
+                    if debug: print(len(prev_stop_seq))
 
-    return schedule
+                    if (len(prev_stop_seq) > 1):  # it could be that prev_stop is empty or just has one stop, then all this is not necessary
+                        print(prev_stop_seq)
+                        print(this_stop_seq)
+                        keep_p = 0
+                        maxdiff = 4 # at most 3 stops missed by ASB
 
+                        for p in prev_stop_seq:
+                            for q in this_stop_seq:
+                                if debug: print('difference stop seq = ',q-p)
 
-def get_delay():
-    return
+                                if( (q - p) > 0):
+                                    print('q-p =', q-p)
+                                    print('maxdiff = ',maxdiff)
+                                    if ((q - p) < maxdiff):
+                                        if debug: print('--- first stop: ', p, 'second stop: ', q, '---')
+                                        keep_p = p
+                                        maxdiff = (q - p)
+
+                                #if (q - p == 1): #todo: this is the point why some matches are not found
+                                #    if debug: print('--- first stop: ', p, 'second stop: ', q, '---')
+                                #    keep = p
+                        #if keep_p != 0: print(arrivals['scheduled_time'].loc[prev_ind_i[prev_stop_seq.index(keep_p)]])
+                        #if keep_p != 0: prev_stop_seq = arrivals['scheduled_time'].loc[prev_ind_i[prev_stop_seq.index(keep_p)]]
+
+                        if keep_p != 0: del prev_ind_i[prev_stop_seq.index(keep_p)]
+                        if keep_p != 0: del prev_stop_seq[prev_stop_seq.index(keep_p)]
+
+                        # if keep == 0: print('stops to remove: ', prev_stop_seq)  # todo: what was the point of this
+
+                        indexes_to_delete.append(prev_ind_i)
+
+                    elif len(prev_ind_i)>0:
+                        #print('PREV:',prev_ind_i[0])
+                        if debug: print(arrivals['scheduled_time'].loc[prev_ind_i[0]])
+                        prev_scheduled_time = arrivals['scheduled_time'].loc[prev_ind_i[0]]
+                        #print(arrivals['scheduled_time'].loc[prev_ind_i[prev_stop_seq[0]]])
+
+                    prev_ind_i = this_ind_i.copy()
+                    this_ind_i = [ind_i]
+                    prev_stop_seq = this_stop_seq.copy()
+                    this_stop_seq = []
+                    this_stop_zespol = row_i['stop_zespol']
+
+                ### this section finds the closest scheduled arrival time to the recorded arrival time
+                old_difference = timedelta(hours=1).total_seconds()
+
+                for ind_j, row_j in schedule.loc[(schedule['stop_id'] == arrivals['stop_id'].loc[ind_i]) &
+                                                 (schedule['lines'] == arrivals['bus_line'].loc[ind_i])].iterrows():
+                    # for all stops in the timetable that have the same stop_id
+
+                    difference = (row_j['arrival_time'] - row_i['arrival_time']).total_seconds()
+                    #if debug: print('DIFF = ',difference)
+                    if abs(difference) < old_difference:
+                        old_difference = abs(difference)
+
+                        #this arrival time should be after the previous arrival event #todo not sure what happens if this is not the case
+                        #if(prev_scheduled_time!=None and row_j['arrival_time']>prev_scheduled_time):
+
+                        arrivals['scheduled_time'].loc[ind_i] = row_j['arrival_time']
+                        arrivals['stop_seq'].loc[ind_i] = row_j['stop_sequence']
+                        stop_seq = row_j['stop_sequence']
+
+                #
+                if stop_seq != "": this_stop_seq.append(stop_seq)
+
+            ### for the second-to-last and last stop
+            keep_p = 0
+            keep_q = 0
+            for p in prev_stop_seq:
+                for q in this_stop_seq:
+                    if debug: print('difference last stop seq = ', q - p)
+                    if (q - p == 1):
+                        if debug: print('first stop: ', p, 'second stop: ', q)
+                        keep_p = p
+                        keep_q = q
+
+            if keep_p != 0: del prev_ind_i[prev_stop_seq.index(keep_p)]
+            if keep_q != 0: del this_ind_i[this_stop_seq.index(keep_q)]
+            indexes_to_delete.append(prev_ind_i)
+            indexes_to_delete.append(this_ind_i)
+
+        for a in indexes_to_delete:
+            arrivals['scheduled_time'].loc[a] = None
+
+    return arrivals
