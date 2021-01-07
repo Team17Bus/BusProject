@@ -8,11 +8,32 @@ def main():
                         # which is necessary for computing the datetime objects (where only time is available)
 
     data_stop_times = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stop_times.txt", sep=",")
+    data_stop_times_yesterday = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-02/stop_times.txt", sep=",")
+    #note that the yesterday in this case should actually be 08-31 (but that file doesn't exist)
+
     del data_stop_times['departure_time']
+    del data_stop_times_yesterday['departure_time']
 
     # todo: obviously the formatting below does not work when analysis is done on a line that passes midnight, we should include dates for that
     #best would be to delete these rows, but to include the ones of a day earlier (after all these are the buses that are being recorded)
 
+    #remove all the scheduled arrivals that actually take place on the next day (night buses etc.)
+    data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 24'))]
+    data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 25'))]
+    data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 26'))]
+    data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 27'))]
+    data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 28'))]
+    data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 29'))]
+
+    #add all scheduled arrivals that actually take place on this day, but are in yesterday's schedule
+    data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 24'))])
+    data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 25'))])
+    data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 26'))])
+    data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 27'))])
+    data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 28'))])
+    data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 29'))])
+
+    #recplace the 'imaginary' hours
     data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 24',' 00')
     data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 25', ' 01')
     data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 26', ' 02')
@@ -20,19 +41,17 @@ def main():
     data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 28', ' 04')
     data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 29', ' 05')
 
+    # formatting the times
+    data_stop_times['arrival_time'] = pd.to_datetime(today + data_stop_times['arrival_time'],
+                                                     format='%Y-%m-%d %H:%M:%S')
+
     # formatting the the stop id
     data_stop_times['stop_id'] = data_stop_times['stop_id'].str.replace(' ','')
-
-    # formatting the times
-    data_stop_times['arrival_time'] = pd.to_datetime(today+data_stop_times['arrival_time'],
-                                                     format='%Y-%m-%d %H:%M:%S')
 
     #Get the line number
     x = data_stop_times['trip_id'].str.split("_",expand=True)
     lines = x[0]
     data_stop_times['lines'] = lines
-
-    #data_stop_times['arrival_time'] = pd.datetime.datetime.combine(today, data_stop_times['arrival_time'])
 
     print(data_stop_times.head())
 
