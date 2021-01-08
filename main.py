@@ -5,7 +5,7 @@ from schedule_format import format
 
 def main():
 
-    today = '2020-01-09' # this is a parameter that indicates the day you are working with,
+    today = '2020-09-01' # this is a parameter that indicates the day you are working with,
                         # which is necessary for computing the datetime objects (where only time is available)
 
     data_stop_times = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stop_times.txt", sep=",")
@@ -77,15 +77,23 @@ def main():
     '''
 
     # FOR HISTORIC DATA TRIALS
-    test_arrival3 = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_estimations_m.csv",';',
+    test_arrival3 = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_estimations_n.csv",';',
                                 dtype={'bus_line':str,'stop_id':str},index_col=False)
     print(test_arrival3.info())
-    test_arrival3['arrival_time'] = pd.to_datetime(test_arrival3['arrival_time'])
-    #test_arrival3 = test_arrival3.sort_values(by='arrival_time',ascending=True)
+
+    #test_arrival3 = test_arrival3[test_arrival3['bus_line']=="104"]
+    #test_arrival3 = test_arrival3[test_arrival3['bus_brigade']==2.0]
+
+    test_arrival3['arrival_time'] = pd.to_datetime(test_arrival3['arrival_time'], format='%Y-%m-%d %H:%M:%S')
+    test_arrival3 = test_arrival3.sort_values(by='arrival_time',ascending=True)
     test_arrival3['scheduled_time'] = ""
+    test_arrival3['stop_id'] = test_arrival3['stop_id'].str.replace(' ', '')
     # test_arrival3['location'] = ""
+
     test_arrival3[['stop_zespol','stop_slupek']] = test_arrival3.stop_id.str.split("_",expand=True)
     test_arrival3['stop_seq'] = ""
+
+    print(test_arrival3.head())
 
     matched_arrivals3 = match_schedule(data_stop_times, test_arrival3)
     test_arrival3.to_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_matches_n.csv", ';', index=False)
@@ -96,7 +104,7 @@ def main():
 
     # FOR HISTORIC DATA
     test_arrival4 = pd.read_csv(
-        "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_estimations_i.csv", ',',
+        "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_estimations.csv", ',',
         dtype={'bus_line': str, 'stop_id': str}, index_col=False, header=None)
     test_arrival4.columns=['bus_line','bus_brigade','stop_id','location','arrival_time','scheduled_time']
     test_arrival4['stop_id'] = test_arrival4['stop_id'].str.replace(' ','')

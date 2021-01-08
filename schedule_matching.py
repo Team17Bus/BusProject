@@ -132,7 +132,22 @@ def match_schedule(schedule, arrivals):
             indexes_to_delete.append(prev_ind_i)
             indexes_to_delete.append(this_ind_i)
 
-        for a in indexes_to_delete:
-            arrivals['scheduled_time'].loc[a] = None
+            for a in indexes_to_delete:
+                arrivals['scheduled_time'].loc[a] = None
+
+            latest_arr_time = None
+
+            for ind_k, row_k in group.iterrows():
+
+                if not(arrivals['scheduled_time'].loc[ind_k] is None):
+                    if latest_arr_time is None:
+                        latest_arr_time = arrivals['scheduled_time'].loc[ind_k]
+                    # elif latest_arr_time > arrivals['scheduled_time'].loc[ind_k]: #in this case the scheduled time set at a later bus stop is actually earlier
+                        # arrivals['scheduled_time'].loc[ind_k] = None
+                    else: latest_arr_time = arrivals['scheduled_time'].loc[ind_k]
+
+
+        #for a in indexes_to_delete:
+            #arrivals['scheduled_time'].loc[a] = None
 
     return arrivals
