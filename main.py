@@ -1,6 +1,7 @@
 import pandas as pd
 import datetime
 from schedule_matching import match_schedule
+from schedule_format import format
 
 def main():
 
@@ -76,7 +77,7 @@ def main():
     '''
 
     # FOR HISTORIC DATA TRIALS
-    test_arrival3 = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_estimations_i.csv",';',
+    test_arrival3 = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_estimations_m.csv",';',
                                 dtype={'bus_line':str,'stop_id':str},index_col=False)
     print(test_arrival3.info())
     test_arrival3['arrival_time'] = pd.to_datetime(test_arrival3['arrival_time'])
@@ -87,7 +88,7 @@ def main():
     test_arrival3['stop_seq'] = ""
 
     matched_arrivals3 = match_schedule(data_stop_times, test_arrival3)
-    test_arrival3.to_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_matches_k.csv", ';', index=False)
+    test_arrival3.to_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_matches_n.csv", ';', index=False)
 
     print(test_arrival3.head())
     
@@ -115,3 +116,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    #format()

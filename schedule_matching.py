@@ -27,13 +27,18 @@ def match_schedule(schedule, arrivals):
             this_stop_seq = []
             this_stop_zespol = ""
 
+            keep_o = 0
+            keep_p = 0
+            keep_q = 0
+
             for ind_i, row_i in group.iterrows():
 
                 stop_seq = ""
                 prev_scheduled_time = None
 
                 # print(f"ind = {ind_i}    stop = {row_i['stop_zespol']}")
-                #print(this_stop_zespol) #up to here similar performance
+                print('THIS',this_stop_zespol) #up to here similar performance
+                print('PREV',keep_p)
 
                 if not this_stop_zespol:  # zespol is not yet identified
                     this_stop_zespol = row_i['stop_zespol']
@@ -43,25 +48,25 @@ def match_schedule(schedule, arrivals):
                 else:  # arrived at the next zespol
                     # (figure out which of all the previously recorded slupek's is the correct one)
 
-                    if debug: print(len(prev_stop_seq))
-
-                    if (len(prev_stop_seq) > 1):  # it could be that prev_stop is empty or just has one stop, then all this is not necessary
+                    if (len(prev_stop_seq) > 0):  # it could be that prev_stop is empty then all this is not necessary
                         print(prev_stop_seq)
                         print(this_stop_seq)
                         keep_p = 0
-                        maxdiff = 4 # at most 3 stops missed by ASB
+                        maxdiff = 3 # at most 3 stops missed by ASB
+
+                        new_keep_q = 0
 
                         for p in prev_stop_seq:
                             for q in this_stop_seq:
                                 if debug: print('difference stop seq = ',q-p)
 
-                                if( (q - p) > 0):
-                                    print('q-p =', q-p)
-                                    print('maxdiff = ',maxdiff)
-                                    if ((q - p) < maxdiff):
-                                        if debug: print('--- first stop: ', p, 'second stop: ', q, '---')
-                                        keep_p = p
-                                        maxdiff = (q - p)
+                                if ((q - p) > 0) and ((q - p) < maxdiff):
+                                    if debug: print('--- first stop: ', p, 'second stop: ', q, '---')
+                                    if debug: print('--- first stop: ', p, 'previous stop: ', keep_o, '---')
+                                    #if ((p-keep_o) < 3):
+                                    keep_p = p
+                                    new_keep_q = q
+                                    maxdiff = (q - p)
 
                                 #if (q - p == 1): #todo: this is the point why some matches are not found
                                 #    if debug: print('--- first stop: ', p, 'second stop: ', q, '---')
@@ -69,18 +74,19 @@ def match_schedule(schedule, arrivals):
                         #if keep_p != 0: print(arrivals['scheduled_time'].loc[prev_ind_i[prev_stop_seq.index(keep_p)]])
                         #if keep_p != 0: prev_stop_seq = arrivals['scheduled_time'].loc[prev_ind_i[prev_stop_seq.index(keep_p)]]
 
+                        if keep_p == 0 and keep_q != 0: print('NOT SET', prev_stop_seq, keep_q, prev_ind_i)
+                        if keep_p == 0 and keep_q != 0:
+                            del prev_ind_i[prev_stop_seq.index(keep_q)]
+                            keep_o = keep_q
+
+                        keep_q = new_keep_q
+
                         if keep_p != 0: del prev_ind_i[prev_stop_seq.index(keep_p)]
                         if keep_p != 0: del prev_stop_seq[prev_stop_seq.index(keep_p)]
 
                         # if keep == 0: print('stops to remove: ', prev_stop_seq)  # todo: what was the point of this
 
                         indexes_to_delete.append(prev_ind_i)
-
-                    elif len(prev_ind_i)>0:
-                        #print('PREV:',prev_ind_i[0])
-                        if debug: print(arrivals['scheduled_time'].loc[prev_ind_i[0]])
-                        prev_scheduled_time = arrivals['scheduled_time'].loc[prev_ind_i[0]]
-                        #print(arrivals['scheduled_time'].loc[prev_ind_i[prev_stop_seq[0]]])
 
                     prev_ind_i = this_ind_i.copy()
                     this_ind_i = [ind_i]
