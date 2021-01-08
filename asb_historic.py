@@ -1,19 +1,32 @@
-import json
 import pandas as pd
-from api_requests import busestrams_get, dbstore_get
-from processing import coord_distance, coord_dist_pythagoras
+from processing import coord_distance
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import datetime
 from asb import get_angle_bisector, is_past_angle_bisector
-from time import sleep
 import csv
+import sys
 
 debug = False
+
+# process arguments
+filename = sys.argv[1] # in the form of: "2020_09_01.csv"
+date = filename.split('.')[0]
+date_hyphenated = '-'.join(date.split('_'))
+
+# where bus data is stored
+FOLDER_IN = '/Volumes/KESU/Project_Bus/'
+BUS_LOCATIONS = 'buses_per_day/' + filename
+BUS_STOPS = 'schedules/' + date_hyphenated + '/stops.txt'
+BUS_SCHEDULE = 'schedules/' + date_hyphenated + '/stop_times.txt'
+
+# where output should go
+FOLDER_OUT = '/Volumes/KESU/Project_Bus/arrival_estimations/'
+
 
 # input file
 
 # Import data, create new column with the line of each bus by extracting the first part of the trip_id field.
-data = pd.read_csv("stop_times.txt", sep=",", header=None)
+data = pd.read_csv(FOLDER_IN + BUS_SCHEDULE, sep=",", header=None)
 data = data.rename(data.iloc[0], axis=1)
 data = data[1:]
 trip_id = data['trip_id']
@@ -33,11 +46,11 @@ for i in range(len(df)):
             busstops_per_line.setdefault(df['Lines'].iloc[i]).append(df['stop_id'].iloc[i])
 
 # set up a python dictionary that holds the reported coordinates of bus when bus is within R meters of S: asb_dict = defaultdict(list)
-stops = pd.read_csv("stops.txt", sep=",", header=None)
+stops = pd.read_csv(FOLDER_IN + BUS_STOPS, sep=",", header=None)
 stops = stops.rename(stops.iloc[0], axis=1)
 stops = stops[1:]
 
-locations = pd.read_csv("t_2020_09_01_22_30", sep=";", header=None)
+locations = pd.read_csv(FOLDER_IN + BUS_LOCATIONS, sep=";", header=None)
 locations['Longitude'] = locations.iloc[:, 3].rename('Longitude', axis=1)
 locations['Latitude'] = locations.iloc[:, 4].rename('Latitude', axis=1)
 
@@ -56,6 +69,7 @@ for i in range(len(stops)):
 
 asb_real = defaultdict(list)
 arrival_time_estimations = []
+num_arrivals_in_memory = 0
 
 for i in range(len(locations)):
 
@@ -105,6 +119,7 @@ for i in range(len(locations)):
                     arrival_time = asb_real[((bus_line, bus_brigade), (stop))][0]['time'][0]
                     if debug: print(f'len==1: {stop}, {arrival_time}')
                     arrival_time_estimations.append([bus_line, bus_brigade, stop, stop_coordinate, arrival_time, None])
+                    num_arrivals_in_memory += 1
                     del asb_real[((bus_line, bus_brigade), (stop))]
                     continue
 
@@ -118,6 +133,7 @@ for i in range(len(locations)):
                     arrival_time = ts1_date + average_delta
                     if debug: print(f'len==2: {stop}, {arrival_time}')
                     arrival_time_estimations.append([bus_line, bus_brigade, stop, stop_coordinate, arrival_time, None])
+                    num_arrivals_in_memory += 1
                     del asb_real[((bus_line, bus_brigade), (stop))]
                     continue
 
@@ -137,7 +153,6 @@ for i in range(len(locations)):
                             index_past_bisector = i
                             index_before_bisector = i - 1
                             some_coord_past_bisector = True
-
                             # break out of for loop
                             break
 
@@ -146,6 +161,7 @@ for i in range(len(locations)):
                         arrival_time = asb_real[((bus_line, bus_brigade), (stop))][0]['time'][0]
                         arrival_time_estimations.append(
                             [bus_line, bus_brigade, stop, stop_coordinate, arrival_time, None])
+                        num_arrivals_in_memory += 1
                         if debug: print(f'no coords pas bisector: {stop}, {arrival_time}')
                         del asb_real[((bus_line, bus_brigade), (stop))]
                         continue
@@ -158,6 +174,7 @@ for i in range(len(locations)):
                     arrival_time = ts1_date + average_delta
                     if debug: print(f'len==multiple: {stop}, {arrival_time}')
                     arrival_time_estimations.append([bus_line, bus_brigade, stop, stop_coordinate, arrival_time, None])
+                    num_arrivals_in_memory += 1
                     del asb_real[((bus_line, bus_brigade), (stop))]
                     continue
 
@@ -176,9 +193,13 @@ for i in range(len(locations)):
                     {'time': [locations.iloc[i, 5]], 'coord': [(bus_coordinate)]})
 
 
-# write results to output file
+    # write results to output file
+    # we don't want to store too many lines in memory, so write to disk every 10,000 lines
+    if num_arrivals_in_memory > 10000:
 
-with open('arrival_estimations.csv', 'w') as arrival_times:
-    arrival_writer = csv.writer(arrival_times, delimiter=',', quotechar='"')
-    for i in range(len(arrival_time_estimations)):
-        arrival_writer.writerow(arrival_time_estimations[i])
+        with open(FOLDER_OUT + filename, 'a') as arrival_times:
+            arrival_writer = csv.writer(arrival_times, delimiter=',', quotechar='"')
+            for i in range(len(arrival_time_estimations)):
+                arrival_writer.writerow(arrival_time_estimations[i])
+        arrival_time_estimations = []
+        num_arrivals_in_memory = 0
