@@ -14,13 +14,22 @@ date = filename.split('.')[0]
 date_hyphenated = '-'.join(date.split('_'))
 
 # where bus data is stored
+""" 
 FOLDER_IN = '/Volumes/KESU/Project_Bus/'
+BUS_LOCATIONS = 'buses_per_day/' + filename
+BUS_STOPS = 'schedules/' + date_hyphenated + '/stops.txt'
+BUS_SCHEDULE = 'schedules/' + date_hyphenated + '/stop_times.txt'
+"""
+FOLDER_IN = '/historic_data/'
 BUS_LOCATIONS = 'buses_per_day/' + filename
 BUS_STOPS = 'schedules/' + date_hyphenated + '/stops.txt'
 BUS_SCHEDULE = 'schedules/' + date_hyphenated + '/stop_times.txt'
 
 # where output should go
+"""
 FOLDER_OUT = '/Volumes/KESU/Project_Bus/arrival_estimations/'
+"""
+FOLDER_OUT = '/historic_data/arrival_estimations_asb/'
 
 
 # input file
