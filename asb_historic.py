@@ -10,6 +10,7 @@ debug = False
 
 # process arguments
 filename = sys.argv[1] # in the form of: "2020_09_01.csv"
+print(filename)
 date = filename.split('.')[0]
 date_hyphenated = '-'.join(date.split('_'))
 
@@ -20,7 +21,7 @@ BUS_LOCATIONS = 'buses_per_day/' + filename
 BUS_STOPS = 'schedules/' + date_hyphenated + '/stops.txt'
 BUS_SCHEDULE = 'schedules/' + date_hyphenated + '/stop_times.txt'
 """
-FOLDER_IN = '/historic_data/'
+FOLDER_IN = 'historic_data/'
 BUS_LOCATIONS = 'buses_per_day/' + filename
 BUS_STOPS = 'schedules/' + date_hyphenated + '/stops.txt'
 BUS_SCHEDULE = 'schedules/' + date_hyphenated + '/stop_times.txt'
@@ -29,7 +30,7 @@ BUS_SCHEDULE = 'schedules/' + date_hyphenated + '/stop_times.txt'
 """
 FOLDER_OUT = '/Volumes/KESU/Project_Bus/arrival_estimations/'
 """
-FOLDER_OUT = '/historic_data/arrival_estimations_asb/'
+FOLDER_OUT = 'historic_data/arrival_estimations_asb/'
 
 
 # input file
@@ -212,3 +213,4 @@ for i in range(len(locations)):
                 arrival_writer.writerow(arrival_time_estimations[i])
         arrival_time_estimations = []
         num_arrivals_in_memory = 0
+        print('writing to disk...')
