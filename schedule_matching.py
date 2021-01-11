@@ -170,6 +170,8 @@ def match_schedule2(schedule, arrivals):
             stop_sequence_previous = stop_sequence-1
             stop_zespol = ''
 
+            max_sequence = 0
+
             old_sequence_difference = 0
 
             change_stop_sequence = False
@@ -235,15 +237,20 @@ def match_schedule2(schedule, arrivals):
                             if valid_stop_time: valid_match_previous = False
 
                     # todo maybe add the option that when the zespol did change and the sequence did not, but the time is better
-                    # that then the better time is used
+                    # in which case the better time is used
 
                     # when the bus reached the end of line
                     # there is no valid sequence possible according to above
                     # instead, the sequence one lower than the maximum will appear
+
                     # todo check validity
                     if row_j['stop_sequence'] == stop_sequence_previous and row_j['stop_sequence'] < stop_sequence:
-                        if debug: print('TURNAROUND', row_j['stop_sequence'], stop_sequence, stop_sequence_previous)
-                        change_stop_sequence = True
+                        if debug: print('TURNAROUND', row_j['stop_sequence'], stop_sequence, max_sequence)
+
+                        # by keeping track of the highest sequence number that has been found, a too early turnaround is killed
+                        if row_j['stop_sequence'] - max_sequence > -2:
+                            change_stop_sequence = True
+                        elif debug: print('PRANK',row_j['stop_sequence'] - max_sequence)
 
                     # the stop is valid, but there still might exist a better match
                     if valid_stop_time and valid_stop_seq:
@@ -280,6 +287,8 @@ def match_schedule2(schedule, arrivals):
 
                     n = 0
 
+                    if best_sequence>max_sequence: max_sequence = best_sequence
+
                     if debug: print('match : time = ',best_time,' sequence = ',best_sequence)
                 else : n = n+1
 
@@ -290,8 +299,9 @@ def match_schedule2(schedule, arrivals):
                 # it is not guaranteed that stop sequence = 2 is always present in the found arrivals
                 if change_stop_sequence :
                     stop_sequence = 1
-                    stop_sequence_previous = 1
+                    stop_sequence_previous = 0
                     change_stop_sequence = False
+                    max_sequence = 0
                     if debug: print('RESET SEQUENCE')
 
                 # this method fails if the bus arrives in the wrong order at the bus stops by the ASB method
