@@ -213,6 +213,8 @@ def match_schedule2(schedule, arrivals):
                     # if this difference is less than the previous difference - the stop is potentially valid
                     if abs(time_difference) < old_time_difference:
                         valid_stop_time = True
+                        if max_sequence < row_j['stop_sequence']: max_sequence = row_j['stop_sequence']
+                        arrivals['stop_seq'].loc[ind_i] = row_j['stop_sequence']
 
                     # if this difference is in the correct range (+1, +2 or +3 in stop sequence) - the stop is potentially valid
                     # todo investigate the consequence of use of this number (it prevents matching 17 following on 3)
@@ -244,11 +246,11 @@ def match_schedule2(schedule, arrivals):
                     # instead, the sequence one lower than the maximum will appear
 
                     # todo check validity
-                    if row_j['stop_sequence'] == stop_sequence_previous and row_j['stop_sequence'] < stop_sequence:
+                    if (row_j['stop_sequence'] == stop_sequence_previous or row_j['stop_sequence'] == stop_sequence_previous-1) and row_j['stop_sequence'] < stop_sequence:
                         if debug: print('TURNAROUND', row_j['stop_sequence'], stop_sequence, max_sequence)
 
                         # by keeping track of the highest sequence number that has been found, a too early turnaround is killed
-                        if row_j['stop_sequence'] - max_sequence > -2:
+                        if row_j['stop_sequence'] - max_sequence > -3:
                             change_stop_sequence = True
                         elif debug: print('PRANK',row_j['stop_sequence'] - max_sequence)
 
@@ -287,7 +289,7 @@ def match_schedule2(schedule, arrivals):
 
                     n = 0
 
-                    if best_sequence>max_sequence: max_sequence = best_sequence
+                    #if best_sequence>max_sequence: max_sequence = best_sequence
 
                     if debug: print('match : time = ',best_time,' sequence = ',best_sequence)
                 else : n = n+1
