@@ -166,7 +166,7 @@ def match_schedule2(schedule, arrivals):
 
         for brig, group in grouped: # for every brigade
 
-            stop_sequence = start_stop_sequence(schedule, group)
+            stop_sequence = 0
             stop_sequence_previous = stop_sequence-1
             stop_zespol = ''
 
@@ -178,9 +178,23 @@ def match_schedule2(schedule, arrivals):
 
             index_previous = 0
 
+            reset_switch = True
+
             n = 0
+            m = 0
+
+            if debug: print('----NEW BRIGADE----')
 
             for ind_i, row_i in group.iterrows():
+
+                m=m+1
+
+                if reset_switch:
+                    stop_sequence = start_stop_sequence(schedule, group, m)
+                    stop_sequence_previous = stop_sequence - 1
+                    if debug: print('FULL RESET')
+                    if debug: print(stop_sequence)
+                    reset_switch = False
 
                 # in case the zespol changed we need to compare this arrival with the stop sequence of the previous arrival
                 # which is then considered to be valid
@@ -260,7 +274,7 @@ def match_schedule2(schedule, arrivals):
 
                         # todo check validity
                         if (row_j['stop_sequence'] == stop_sequence_previous or row_j[
-                            'stop_sequence'] == stop_sequence_previous - 1) and row_j['stop_sequence'] < stop_sequence:
+                                'stop_sequence'] == stop_sequence_previous - 1) and row_j['stop_sequence'] < stop_sequence:
                             if debug: print('TURNAROUND', row_j['stop_sequence'], stop_sequence, max_sequence)
 
                             turnaround_limit = (max_sequence+2)/2
@@ -300,14 +314,18 @@ def match_schedule2(schedule, arrivals):
 
                     max_sequence = find_max_stop_sequence(schedule,trip_id)
 
+                    if stop_sequence == max_sequence: change_stop_sequence=True
+
                     if debug: print('match : time = ',best_time,' sequence = ',best_sequence)
-                else : n = n+1
+                elif changed_zespol:
+                    n = n + 1
+                    if n == 5:
+                        reset_switch = True
+                        print('RESET SWITCH ACTIVATED')
 
                 # it has been determined that the bus reached the end of the line
                 # reset the stop sequence parameters
 
-                # it has been investigated to pick up the arrival time of stop with sequence 2,
-                # it is not guaranteed that stop sequence = 2 is always present in the found arrivals
                 if change_stop_sequence :
                     stop_sequence = 2
                     stop_sequence_previous = 1
@@ -320,7 +338,7 @@ def match_schedule2(schedule, arrivals):
     return
 
 #a function to figure out what the starting number of the sequence is
-def start_stop_sequence(schedule, group_arrivals):
+def start_stop_sequence(schedule, group_arrivals, ind):
     no_of_stops = 0
     this_sequence = 0
 
@@ -329,13 +347,20 @@ def start_stop_sequence(schedule, group_arrivals):
     zespol2 = ""
     sequence2 = []
 
+    x = 0
+
     # determine the possible sequences for z1 and z2 (only mixed up if there is an appearance of z3 before the latest z2)
     for ind_p, row_p in group_arrivals.iterrows():
+
+        x=x+1
+
+        if (x<ind): continue
 
         if no_of_stops>2: break
 
         if no_of_stops==0:
             zespol1 = row_p['stop_zespol']
+            #zespol1 = group_arrivals['stop_zespol'].loc[ind_p]
             no_of_stops = no_of_stops+1
             if debug: print('first stop:',zespol1)
         if no_of_stops==1:
@@ -363,13 +388,15 @@ def start_stop_sequence(schedule, group_arrivals):
 
         if zespol2 == row_p['stop_zespol']: sequence2.append(this_sequence)
 
+    print(sequence1)
+
     #determine the correct order - and what z1 must be
     sequence_start = 0
     maxdiff = 4
 
     for p in sequence1:
         for q in sequence2:
-            if debug: print('difference stop seq = ', q - p)
+            if debug: print('difference stop seq = ',q, p, q - p)
             if ((q - p) > 0) and ((q - p) < maxdiff):
                 sequence_start = p
                 maxdiff = q - p
@@ -386,6 +413,6 @@ def find_max_stop_sequence(schedule,trip_id):
     for ind_k, row_k in schedule.loc[schedule['trip_id'] == trip_id].iterrows():
         if row_k['stop_sequence'] > max_stop_sequence: max_stop_sequence = row_k['stop_sequence']
 
-    print(max_stop_sequence)
+    print('Max stop sequence:',max_stop_sequence)
 
     return max_stop_sequence
