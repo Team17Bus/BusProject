@@ -4,7 +4,7 @@ from datetime import timedelta
 
 debug = True
 
-
+'''
 def match_schedule(schedule, arrivals):
 
     line_grouped = arrivals.groupby(['bus_line'])
@@ -151,7 +151,7 @@ def match_schedule(schedule, arrivals):
             #arrivals['scheduled_time'].loc[a] = None
 
     return arrivals
-
+'''
     # General approach: try to prove that a scheduled stop is not valid and that a found arrival is not valid
     # In terms of time and in terms of stop sequence
     # If it is valid in both cases, then it must be the correct stop
@@ -330,38 +330,38 @@ def start_stop_sequence(schedule, group_arrivals):
     sequence2 = []
 
     # determine the possible sequences for z1 and z2 (only mixed up if there is an appearance of z3 before the latest z2)
-    for ind_i, row_i in group_arrivals.iterrows():
+    for ind_p, row_p in group_arrivals.iterrows():
 
         if no_of_stops>2: break
 
         if no_of_stops==0:
-            zespol1 = row_i['stop_zespol']
+            zespol1 = row_p['stop_zespol']
             no_of_stops = no_of_stops+1
             if debug: print('first stop:',zespol1)
         if no_of_stops==1:
-            if zespol1 != row_i['stop_zespol']:
-                zespol2 = row_i['stop_zespol']
+            if zespol1 != row_p['stop_zespol']:
+                zespol2 = row_p['stop_zespol']
                 no_of_stops = no_of_stops+1
                 if debug: print('second stop:',zespol2)
             elif debug: print('first stop again:', zespol1)
         if no_of_stops==2:
-            if zespol1 != row_i['stop_zespol'] and zespol2 != row_i['stop_zespol']:
+            if zespol1 != row_p['stop_zespol'] and zespol2 != row_p['stop_zespol']:
                 no_of_stops = no_of_stops+1
                 if debug: print('third stop')
-            elif debug: print('first or second stop:',row_i['stop_zespol'])
+            elif debug: print('first or second stop:',row_p['stop_zespol'])
 
-        old_time_difference = timedelta(hours=1).total_seconds()
+        old_t_difference = timedelta(hours=1).total_seconds()
 
-        for ind_j, row_j in schedule.loc[(schedule['stop_id'] == group_arrivals['stop_id'].loc[ind_i]) &
-                                         (schedule['lines'] == group_arrivals['bus_line'].loc[ind_i])].iterrows():
-            time_difference = (row_j['arrival_time'] - row_i['arrival_time']).total_seconds()
+        for ind_q, row_q in schedule.loc[(schedule['stop_id'] == group_arrivals['stop_id'].loc[ind_p]) &
+                                         (schedule['lines'] == group_arrivals['bus_line'].loc[ind_p])].iterrows():
+            t_difference = (row_q['arrival_time'] - row_p['arrival_time']).total_seconds()
 
-            if abs(time_difference) < old_time_difference:
-                this_sequence = row_j['stop_sequence']
+            if abs(t_difference) < old_t_difference:
+                this_sequence = row_q['stop_sequence']
 
-        if zespol1 == row_i['stop_zespol']: sequence1.append(this_sequence)
+        if zespol1 == row_p['stop_zespol']: sequence1.append(this_sequence)
 
-        if zespol2 == row_i['stop_zespol']: sequence2.append(this_sequence)
+        if zespol2 == row_p['stop_zespol']: sequence2.append(this_sequence)
 
     #determine the correct order - and what z1 must be
     sequence_start = 0
