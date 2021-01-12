@@ -190,9 +190,12 @@ def match_schedule2(schedule, arrivals):
                 m=m+1
 
                 if reset_switch:
+                    if debug: print('FULL RESET')
                     stop_sequence = start_stop_sequence(schedule, group, m)
                     stop_sequence_previous = stop_sequence - 1
-                    if debug: print('FULL RESET')
+                    stop_zespol = ''
+                    max_sequence = 0
+                    old_sequence_difference = 0
                     if debug: print(stop_sequence)
                     reset_switch = False
 
@@ -270,16 +273,14 @@ def match_schedule2(schedule, arrivals):
                     elif valid_stop_time:
                         # when the bus reached the end of line
                         # there is no valid sequence possible according to above
-                        # instead, the sequence one lower than the maximum will appear
+                        # instead, the sequence one or two lower than the maximum will appear
 
                         # todo check validity
                         if (row_j['stop_sequence'] == stop_sequence_previous or row_j[
                                 'stop_sequence'] == stop_sequence_previous - 1) and row_j['stop_sequence'] < stop_sequence:
                             if debug: print('TURNAROUND', row_j['stop_sequence'], stop_sequence, max_sequence)
 
-                            turnaround_limit = (max_sequence+2)/2
                             # by keeping track of the highest sequence number that has been found, a too early turnaround is killed
-                            #if row_j['stop_sequence'] - max_sequence > (-2-2*n):
                             if row_j['stop_sequence'] - max_sequence > (-3):
                                 change_stop_sequence = True
                             elif debug:
@@ -314,6 +315,7 @@ def match_schedule2(schedule, arrivals):
 
                     max_sequence = find_max_stop_sequence(schedule,trip_id)
 
+                    #early detection of turnaround
                     if stop_sequence == max_sequence: change_stop_sequence=True
 
                     if debug: print('match : time = ',best_time,' sequence = ',best_sequence)
@@ -327,8 +329,8 @@ def match_schedule2(schedule, arrivals):
                 # reset the stop sequence parameters
 
                 if change_stop_sequence :
-                    stop_sequence = 2
-                    stop_sequence_previous = 1
+                    stop_sequence = 1
+                    stop_sequence_previous = 0
                     change_stop_sequence = False
                     max_sequence = 0
                     if debug: print('RESET SEQUENCE')
