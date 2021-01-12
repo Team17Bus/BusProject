@@ -27,6 +27,7 @@ import json
 
 
 # NOTE: 23,342 out of 905,369 entries have times > 23:59:59 (e.g. 29:54:00). max is 29:56:00. --> dropped these...
+# or better: use Jurriaan's method in main.py (replace 24 with 00, 25 with 01 etc) and move to the next day
 
 debug_small_dataset = False
 debug_only_1_line_and_brigade = False
