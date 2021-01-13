@@ -2,7 +2,7 @@ import pandas as pd
 
 from datetime import timedelta
 
-debug = True
+debug = False
 
 '''
 def match_schedule(schedule, arrivals):
@@ -183,7 +183,7 @@ def match_schedule2(schedule, arrivals):
             n = 0
             m = 0
 
-            if debug: print('----NEW BRIGADE----')
+            if not debug: print('----NEW BRIGADE----')
 
             for ind_i, row_i in group.iterrows():
 
@@ -323,7 +323,7 @@ def match_schedule2(schedule, arrivals):
                     n = n + 1
                     if n == 5:
                         reset_switch = True
-                        print('RESET SWITCH ACTIVATED')
+                        if debug: print('RESET SWITCH ACTIVATED')
 
                 # it has been determined that the bus reached the end of the line
                 # reset the stop sequence parameters
@@ -390,7 +390,7 @@ def start_stop_sequence(schedule, group_arrivals, ind):
 
         if zespol2 == row_p['stop_zespol']: sequence2.append(this_sequence)
 
-    print(sequence1)
+    if debug: print(sequence1)
 
     #determine the correct order - and what z1 must be
     sequence_start = 0
@@ -415,6 +415,6 @@ def find_max_stop_sequence(schedule,trip_id):
     for ind_k, row_k in schedule.loc[schedule['trip_id'] == trip_id].iterrows():
         if row_k['stop_sequence'] > max_stop_sequence: max_stop_sequence = row_k['stop_sequence']
 
-    print('Max stop sequence:',max_stop_sequence)
+    if debug: print('Max stop sequence:',max_stop_sequence)
 
     return max_stop_sequence

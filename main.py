@@ -1,15 +1,23 @@
 import pandas as pd
 import datetime
-from schedule_matching import match_schedule, match_schedule2
+from schedule_matching import match_schedule2
 from schedule_format import format
 
 def main():
 
+    debug = False
+
+    dir_schedule_today = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stop_times.txt"
+    dir_schedule_yesterday = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stop_times.txt"
+
+    dir_arrivals = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/Historic Data/2020_09_01.csv"
+    dir_matches = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/Historic Data/2020_09_01_matched.csv"
+
     today = '2020-09-01' # this is a parameter that indicates the day you are working with,
                         # which is necessary for computing the datetime objects (where only time is available)
 
-    data_stop_times = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stop_times.txt", sep=",")
-    data_stop_times_yesterday = pd.read_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-02/stop_times.txt", sep=",")
+    data_stop_times = pd.read_csv(dir_schedule_today, sep=",")
+    data_stop_times_yesterday = pd.read_csv(dir_schedule_yesterday, sep=",")
     #note that the yesterday in this case should actually be 08-31 (but that file doesn't exist)
 
     del data_stop_times['departure_time']
@@ -54,7 +62,7 @@ def main():
     lines = x[0]
     data_stop_times['lines'] = lines
 
-    print(data_stop_times.head())
+    if debug: print(data_stop_times.head())
 
     '''
     
@@ -100,31 +108,35 @@ def main():
 
     print(test_arrival3.head())
 
-    
+    '''
 
     # FOR HISTORIC DATA
-    test_arrival4 = pd.read_csv(
-        "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_estimations_o.csv", ',',
-        dtype={'bus_line': str, 'stop_id': str}, index_col=False, header=None)
-    test_arrival4.columns=['bus_line','bus_brigade','stop_id','location','arrival_time','scheduled_time']
-    test_arrival4['stop_id'] = test_arrival4['stop_id'].str.replace(' ','')
-    test_arrival4['arrival_time'] = pd.to_datetime(test_arrival4['arrival_time'])
-    test_arrival4[['stop_zespol', 'stop_slupek']] = test_arrival4.stop_id.str.split("_", expand=True)
-    test_arrival4['stop_seq'] = ""
-    test_arrival3 = test_arrival4.sort_values(by='arrival_time',ascending=True)
+    historic_arrivals = pd.read_csv(dir_arrivals, ',', dtype={'0': str, '2': str}, index_col=0)
+    historic_arrivals = historic_arrivals.rename(columns={'0':'bus_line','1':'bus_brigade','2':'stop_id','3':'location','4':'arrival_time','5':'scheduled_time'})
 
-    matched_arrivals4 = match_schedule(data_stop_times, test_arrival4)
-    test_arrival4.to_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_matches_o.csv",
-                         ';', index=False)
+    historic_arrivals['stop_id'] = historic_arrivals['stop_id'].str.replace(' ', '')
+    historic_arrivals['arrival_time'] = pd.to_datetime(historic_arrivals['arrival_time'], format='%Y-%m-%d %H:%M:%S')
+    historic_arrivals[['stop_zespol', 'stop_slupek']] = historic_arrivals.stop_id.str.split("_", expand=True)
+    historic_arrivals['stop_seq'] = ""
 
-    print(test_arrival4.head())
+    historic_arrivals = historic_arrivals.sort_values(by='arrival_time', ascending=True)
+
+    match_schedule2(data_stop_times, historic_arrivals)
+    historic_arrivals = historic_arrivals.dropna(subset=['scheduled_time'])
+    historic_arrivals.to_csv(dir_matches, ';', index=False)
+
+    print(historic_arrivals.head())
     '''
 
     test_arrival5 = pd.read_csv(
-        "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_estimations_n.csv", ';',
+        "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_estimations_p.csv", ';',
         dtype={'bus_line': str, 'stop_id': str}, index_col=False)
-    #test_arrival5.columns = ['bus_line', 'bus_brigade', 'stop_id', 'location', 'arrival_time', 'scheduled_time']
+    test_arrival5.columns = ['bus_line', 'bus_brigade', 'stop_id', 'location', 'arrival_time']
     test_arrival5['scheduled_time'] = ""
+
+    test_arrival5 = test_arrival5[test_arrival5['bus_line'] == "103"]
+    test_arrival5 = test_arrival5[test_arrival5['bus_brigade'] == 20]
+
     test_arrival5['stop_id'] = test_arrival5['stop_id'].str.replace(' ', '')
     test_arrival5['arrival_time'] = pd.to_datetime(test_arrival5['arrival_time'], format='%Y-%m-%d %H:%M:%S')
     test_arrival5[['stop_zespol', 'stop_slupek']] = test_arrival5.stop_id.str.split("_", expand=True)
@@ -134,10 +146,12 @@ def main():
     print(test_arrival5.head())
 
     matched_arrival5 = match_schedule2(data_stop_times, test_arrival5)
-    test_arrival5.to_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_matches2_c.csv",
+    test_arrival5 = test_arrival5[test_arrival5['scheduled_time'] != ""]
+    test_arrival5.to_csv("C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/arrival_matches2_p.csv",
                          ';', index=False)
 
     print(test_arrival5.head())
+    '''
 
     pass
 
