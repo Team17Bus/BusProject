@@ -106,7 +106,7 @@ for i in range(len(combos)):
     brigade = combos.iloc[i]['brigade']
     line = combos.iloc[i]['line']
     filtered_df = df.loc[(df['brigade'] == brigade) & (df['line'] == line)]
-    filtered_df = wi
+    filtered_df = filtered_df.reset_index(drop=True)
     filtered_df['order'] = filtered_df.index
     order_dict[(line, brigade)] = filtered_df
 
