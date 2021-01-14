@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --job-name=test_matching_historic.job
+#SBATCH --job-name=matching_historic.job
 #SBATCH --output=run.out
 #SBATCH --error=run.err
 #SBATCH --time=24:00:00
@@ -12,7 +12,7 @@
 #SBATCH -a 0-3
 #SBATCH --account=um_dke
 
-DATES=(2020_09_01,2020_09_01 2020_09_02,2020_09_01 2020_09_03,2020_09_02 2020_09_04,2020_09_03)
+DATES=(2020_09_04,2020_09_03)
 
 myarg1=${DATES[`expr $SLURM_ARRAY_TASK_ID % ${#DATES[@]}`]}
 

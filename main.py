@@ -4,7 +4,6 @@ import sys
 
 debug = True
 
-
 def convert_dtype(x):
     if not x:
         return ''
@@ -142,16 +141,18 @@ print(test_arrival3.head())
 '''
 
 # FOR HISTORIC DATA
-if today=='2020_09_01':
-    historic_arrivals = pd.read_csv(dir_arrivals, ',', dtype={'0': str, '2': str}, converters={'1':convert_dtype}, index_col=0)
+if today == '2020_09_01':
+    historic_arrivals = pd.read_csv(dir_arrivals, ',', dtype={'0': str, '2': str}, converters={'1': convert_dtype},
+                                    index_col=0)
     historic_arrivals = historic_arrivals.rename(
         columns={'0': 'bus_line', '1': 'bus_brigade', '2': 'stop_id', '3': 'location', '4': 'arrival_time',
-             '5': 'scheduled_time'})
+                 '5': 'scheduled_time'})
 else:
     historic_arrivals = pd.read_csv(dir_arrivals, ',',
-                                    names=['bus_line', 'bus_brigade','stop_id','location','arrival_time','scheduled_time'],
+                                    names=['bus_line', 'bus_brigade', 'stop_id', 'location', 'arrival_time',
+                                           'scheduled_time'],
                                     dtype={'bus_line': str, 'stop_id': str},
-                                    converters={'bus_brigade':convert_dtype},index_col=False)
+                                    converters={'bus_brigade': convert_dtype}, index_col=False)
 
 historic_arrivals['stop_id'] = historic_arrivals['stop_id'].str.replace(' ', '')
 historic_arrivals['arrival_time'] = pd.to_datetime(historic_arrivals['arrival_time'], format='%Y-%m-%d %H:%M:%S')

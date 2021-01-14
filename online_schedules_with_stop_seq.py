@@ -31,6 +31,7 @@ import json
 
 debug_small_dataset = False
 debug_only_1_line_and_brigade = False
+export_to_csv = True
 
 pd.set_option("display.max_columns", None)
 
@@ -110,3 +111,8 @@ for i in range(len(combos)):
     filtered_df['order'] = filtered_df.index
     order_dict[(line, brigade)] = filtered_df
 
+if export_to_csv:
+    df = pd.concat([order_dict[k] for k in order_dict], axis=0).reset_index(drop=True)
+    print(df)
+
+    df.to_csv('online_data/stop_times16dec.csv', index=False, header=False)

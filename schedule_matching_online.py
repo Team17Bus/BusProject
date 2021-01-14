@@ -170,7 +170,7 @@ def match_schedule2(schedule, arrivals):
             stop_sequence_previous = stop_sequence-1
             stop_zespol = ''
 
-            max_sequence = 0
+            #max_sequence = 0
 
             old_sequence_difference = 0
 
@@ -191,7 +191,7 @@ def match_schedule2(schedule, arrivals):
 
                 if reset_switch:
                     if debug: print('FULL RESET')
-                    stop_sequence = start_stop_sequence(schedule, group, m)
+                    stop_sequence = start_stop_sequence(schedule, group, m) #NOT HERE
                     stop_sequence_previous = stop_sequence - 1
                     stop_zespol = ''
                     max_sequence = 0
@@ -212,12 +212,16 @@ def match_schedule2(schedule, arrivals):
 
                 match_found = False # boolean used to know if at least any match in the schedule has been found
 
-                old_time_difference = timedelta(hours=1).total_seconds()
+                #old_time_difference = timedelta(minutes=10).total_seconds()
+                old_time_difference_before = -(timedelta(minutes=30).total_seconds())
+                old_time_difference_after = timedelta(minutes=30).total_seconds()
+                abs_time_difference = timedelta(minutes=30).total_seconds()
 
                 trip_id = ""
 
                 for ind_j, row_j in schedule.loc[(schedule['stop_id'] == arrivals['stop_id'].loc[ind_i]) &
                                                  (schedule['lines'] == arrivals['bus_line'].loc[ind_i])].iterrows():
+                #for ind_j, row_j in schedule.loc[(schedule['lines'] == arrivals['bus_line'].loc[ind_i])].iterrows():
                     # only iterate over stops in the timetable that have the same stop_id and the same line
 
                     # To prove whether a stop in the schedule is valid, based on time and sequence
@@ -230,9 +234,11 @@ def match_schedule2(schedule, arrivals):
                     # if debug: print('DIFF = ',difference)
 
                     # if this difference is less than the previous difference - the stop is potentially valid
-                    if abs(time_difference) < old_time_difference:
+                    if old_time_difference_before < time_difference < old_time_difference_after and\
+                        abs(time_difference) < abs_time_difference:
                         valid_stop_time = True
                         #if max_sequence < row_j['stop_sequence']: max_sequence = row_j['stop_sequence']
+                        print(old_time_difference_before, time_difference, old_time_difference_after)
                         arrivals['stop_seq'].loc[ind_i] = row_j['stop_sequence']
 
                     # if this difference is in the correct range (+1, +2 or +3 in stop sequence) - the stop is potentially valid
@@ -264,13 +270,19 @@ def match_schedule2(schedule, arrivals):
 
                     # the stop is valid, but there still might exist a better match
                     if valid_stop_time and valid_stop_seq:
-                        old_time_difference = abs(time_difference)
+                        if time_difference >= 0:
+                            old_time_difference_after = time_difference
+                        else : old_time_difference_before = time_difference
+                        abs_time_difference=abs(time_difference)
                         best_time = row_j['arrival_time']
                         best_sequence = row_j['stop_sequence']
                         best_sequence_difference = sequence_difference
                         match_found = True
-                        trip_id = row_j['trip_id']
-                    elif valid_stop_time:
+                        print('TIME CHANGED')
+                        #trip_id = row_j['trip_id']
+
+                    '''elif valid_stop_time: print('TIME NOT CHANGED')
+                    
                         # when the bus reached the end of line
                         # there is no valid sequence possible according to above
                         # instead, the sequence one or two lower than the maximum will appear
@@ -285,7 +297,7 @@ def match_schedule2(schedule, arrivals):
                                 change_stop_sequence = True
                             elif debug:
                                 print('PRANK', row_j['stop_sequence'] - max_sequence)
-
+                    '''
                 # It turned out that the previous match was not correct
                 # Because this match has a better sequence for the same zespol
                 if not valid_match_previous:
@@ -313,10 +325,10 @@ def match_schedule2(schedule, arrivals):
 
                     n = 0
 
-                    max_sequence = find_max_stop_sequence(schedule,trip_id)
+                    #max_sequence = find_max_stop_sequence(schedule,trip_id)
 
                     #early detection of turnaround
-                    if stop_sequence == max_sequence: change_stop_sequence=True
+                    #if stop_sequence == max_sequence: change_stop_sequence=True
 
                     if debug: print('match : time = ',best_time,' sequence = ',best_sequence)
                 elif changed_zespol:
