@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, time
 import numpy as np
 from collections import defaultdict
 
@@ -12,22 +12,26 @@ historical_data = True  # False if using online data
 # TODO: make work for online arrivals / schedules
 # problem: no stop_seq --> should start over with delay diff if seq starts over, but not possible with online data...
 
-# goal: assign delay difference to edges between stops
+# goal 1: assign delay difference to edges between stops
 
-# result: delay_diff_dict
+# result 1: delay_diff_dict
 # key: (line, brigade)
 # values: list of dataFrames, with
-#       stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
+#       stop_from_id  stop_from_loc stop_to_id  stop_to_loc delay_diff  stop_seq_diff  avg_delay_diff line brigade sched_date, sched_time
 #   as columns
 #   one dataFrame per run
 # see below (bottom) for sample output
+
+
+# goal 2: discretize data & normalize (according to szymanski et al)
+
 
 pd.set_option("display.max_columns", None)
 
 if historical_data:
 
     # import arrivals
-    arr = pd.read_csv("arrival_matches_01-09-2020_2130 (subset).csv", sep=';', header=0)
+    arr = pd.read_csv("arrival_matches_01-09-2020_2130.csv", sep=';', header=0)
     arr = arr[arr['scheduled_time'].notnull()]
 
     """ Not necessary
@@ -50,8 +54,11 @@ if historical_data:
 
 
     # add column with absolute delays
-    arr['arrival_time'] = arr['arrival_time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
-    arr['scheduled_time'] = arr['scheduled_time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+    #arr['arrival_time'] = arr['arrival_time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
+    #arr['scheduled_time'] = arr['scheduled_time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+    arr['arrival_time'] = pd.to_datetime(arr['arrival_time'], format='%Y-%m-%d %H:%M:%S')
+    arr['scheduled_time'] = pd.to_datetime(arr['scheduled_time'], format='%Y-%m-%d %H:%M:%S')
+
     arr['absolute_delay_sec'] = arr['arrival_time'] - arr['scheduled_time']
     arr['absolute_delay_sec'] = arr['absolute_delay_sec'].apply(lambda x: abs(x.total_seconds()))   # in seconds
     arr['absolute_delay_min'] = arr['absolute_delay_sec'] / 60                                      # in minutes
@@ -60,6 +67,7 @@ if historical_data:
     # add column with relative delays and number of stops in between
     arr['relative_delay_sec'] = pd.Series([], dtype='float')
     arr['stop_seq_diff'] = pd.Series([], dtype='int')           # if stop is just after next one (ideal), this value is 1; if one stop is skipped, value is 2.
+
 
     if debug_with_one_line_one_brigade:
         arr = arr.reset_index(drop=True)
@@ -99,7 +107,6 @@ if historical_data:
             columns=['stop_from', 'stop_to', 'delay_diff', 'stop_seq_diff', 'avg_delay_diff'])
             for r in range(len(runs))]
 
-
     combos = arr.loc[:, ['bus_line', 'bus_brigade']].drop_duplicates()
     delay_diff_dict = dict()   # stores: list of dataframes: stop_from stop_to delay_diff stop_seq_diff avg_delay_diff; (line, brigade) as keys
                                            # each dataframe corresponds to a run (complete stop sequence)
@@ -135,113 +142,166 @@ if historical_data:
         # use list comprehension to come up with stop_from stop_to delay_diff stop_seq_diff avg_delay_diff for each run
         delay_diff_dict[(line, brigade)] = [pd.DataFrame(
             [[runs[r].iloc[i]['stop_id'],
+              runs[r].iloc[i]['location'],
               runs[r].iloc[i + 1]['stop_id'],
+              runs[r].iloc[i + 1]['location'],
               runs[r].iloc[i + 1]['relative_delay_sec'],
               runs[r].iloc[i + 1]['stop_seq_diff'],
-              runs[r].iloc[i + 1]['relative_delay_sec'] / runs[r].iloc[i + 1]['stop_seq_diff']]
+              runs[r].iloc[i + 1]['relative_delay_sec'] / runs[r].iloc[i + 1]['stop_seq_diff'],
+              runs[r].iloc[i + 1]['relative_delay_sec'] / runs[r].iloc[i + 1]['stop_seq_diff'] / 60.0,
+              line,
+              brigade,
+              runs[r].iloc[i + 1]['scheduled_time'],
+              runs[r].iloc[i + 1]['scheduled_time'].date(),
+              runs[r].iloc[i + 1]['scheduled_time'].time()]
              for i in range(len(runs[r]) - 1)],
-            columns=['stop_from', 'stop_to', 'delay_diff', 'stop_seq_diff', 'avg_delay_diff'])
+            columns=['stop_from_id', 'stop_from_loc', 'stop_to_id', 'stop_to_loc', 'delay_diff', 'stop_seq_diff', 'avg_delay_diff_sec', 'avg_delay_diff_min', 'line', 'brigade', 'sched_datetime', 'sched_date', 'sched_time'])
             for r in range(len(runs))]
 
+# ---------------------------------------------------------------------------------------------
 
-""" example output of delay_diff_dict
+    # part 2 (discretization & normalization)
 
-(109, 30): 
-  [   stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
-  0    5034_01  5033_01         2.0            1.0             2.0
-  1    5033_01  5194_51        18.0            1.0            18.0
-  2    5194_51  5032_51        65.0            1.0            65.0
-  3    5032_51  5031_01       -70.0            1.0           -70.0
-  4    5031_01  5030_01        -1.0            1.0            -1.0
-  5    5030_01  5020_55       -13.0            1.0           -13.0
-  6    5020_55  5019_51       104.0            1.0           104.0
-  7    5019_51  5008_05       -48.0            1.0           -48.0
-  8    5008_05  5044_51        22.0            2.0            11.0
-  9    5044_51  5042_01        93.0            2.0            46.5
-  10   5042_01  7088_01         4.0            4.0             1.0
-  11   7088_01  7002_01        45.0            2.0            22.5
-  12   7002_01  7013_05        44.0            2.0            22.0
-  13   7013_05  7033_01       -11.0            1.0           -11.0
-  14   7033_01  7040_04        -4.0            2.0            -2.0
-  15   7040_04  7069_01        -3.0            2.0            -1.5
-  16   7069_01  7070_01       -29.0            1.0           -29.0
-  17   7070_01  7092_01        41.0            1.0            41.0
-  18   7092_01  7077_01         8.0            1.0             8.0
-  19   7077_01  7076_03       -20.0            2.0           -10.0
-  20   7076_03  7076_07       100.0            1.0           100.0,   
-  
-  stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
-  0   7071_04  7069_04        81.0            2.0       40.500000
-  1   7069_04  7033_02      -104.0            3.0      -34.666667],
- 
- 
- (106, 10): 
-  [  stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
-  0   5038_02  5005_06       157.0            2.0            78.5
-  1   5005_06  5026_04       -73.0            1.0           -73.0
-  2   5026_04  5112_02        47.0            1.0            47.0
-  3   5112_02  5067_07        14.0            1.0            14.0,    
-  
-  stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
-  0    5095_01  5037_01       -54.0            1.0      -54.000000
-  1    5037_01  5193_01        44.0            1.0       44.000000
-  2    5193_01  5036_01         8.0            1.0        8.000000
-  3    5036_01  7087_01       -51.0            1.0      -51.000000
-  4    7087_01  7025_03        35.0            1.0       35.000000
-  5    7025_03  7015_03         5.0            1.0        5.000000
-  6    7015_03  7028_01       -10.0            1.0      -10.000000
-  7    7028_01  7044_01        99.0            1.0       99.000000
-  8    7044_01  7043_03       -64.0            2.0      -32.000000
-  9    7043_03  7062_02       -43.0            3.0      -14.333333
-  10   7062_02  7061_02       198.0            1.0      198.000000],
- 
- (102, 30): 
-  [  stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
-  0   2109_02  2108_05        46.0            1.0            46.0
-  1   2108_05  2108_04       266.0            1.0           266.0,    
-  
-  stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
-  0    2109_03  2111_01      -559.0            2.0          -279.5
-  1    2111_01  2114_01       -18.0            2.0            -9.0
-  2    2114_01  2115_01         2.0            1.0             2.0
-  3    2115_01  2116_01         1.0            1.0             1.0
-  4    2116_01  2006_05         5.0            1.0             5.0
-  5    2006_05  2127_01        44.0            1.0            44.0
-  6    2127_01  2133_01       -12.0            1.0           -12.0
-  7    2133_01  2131_01       -39.0            3.0           -13.0
-  8    2131_01  2399_02        21.0            1.0            21.0
-  9    2399_02  1232_03         1.0            1.0             1.0
-  10   1232_03  7079_04        97.0            1.0            97.0
-  11   7079_04  7067_02       -52.0            2.0           -26.0
-  12   7067_02  7043_04         1.0            2.0             0.5
-  13   7043_04  7044_02       -31.0            2.0           -15.5
-  14   7044_02  7028_02       -24.0            1.0           -24.0
-  15   7028_02  7015_04        65.0            1.0            65.0
-  16   7015_04  7025_02         5.0            1.0             5.0
-  17   7025_02  7001_01        96.0            2.0            48.0,   
-  
-  stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
-  0   7001_02  7025_01        19.0            1.0            19.0
-  1   7025_01  7015_03        -5.0            2.0            -2.5
-  2   7015_03  7028_01        90.0            1.0            90.0
-  3   7028_01  7044_01        14.0            1.0            14.0],
- 
- 
- (102, 20): 
- [  stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
-  0   2113_04  2112_02        -1.0            1.0            -1.0,   
-  
-  stop_from  stop_to  delay_diff  stop_seq_diff  avg_delay_diff
-  0   2006_05  2127_01        35.0            1.0       35.000000
-  1   2127_01  2132_01       -23.0            2.0      -11.500000
-  2   2132_01  2131_01       -94.0            2.0      -47.000000
-  3   2131_01  2399_02       112.0            1.0      112.000000
-  4   2399_02  2399_01         0.0            1.0        0.000000
-  5   2399_01  7067_02      -112.0            3.0      -37.333333
-  6   7067_02  7043_04        56.0            2.0       28.000000
-  7   7043_04  7044_02       -28.0            2.0      -14.000000
-  8   7044_02  7028_02        -9.0            1.0       -9.000000],
+    # concat all dataFrames
+    df = pd.concat([delay_diff_dict[k][r] for k in delay_diff_dict for r in range(len(delay_diff_dict[k]))],
+                   axis=0).reset_index(drop=True)
+
+    df.to_csv('delays_edges_01-09-2020_2130.csv', index=False)
+
+    df = df.drop(df[df['stop_seq_diff'] == 0].index)  # a very small number of rows have this
+
+    # date_time_object.time()
+    bins_timeofday = [time(x[0], x[1]) for x in [(5, 0), (7, 0), (9, 0), (16, 0), (18, 30), (22, 0)]]
+    bins_delay_diff = [-60.0, -30.5, -20.5, -15.5, -10.5, -5.5, -4.5, -3.5, -2.5, -1.5, -0.5, 0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 10.5, 15.5, 20.5, 30.5, 60.0]
+
+    delay_cut = pd.cut(df['avg_delay_diff_min'], bins=bins_delay_diff)
+    delay_cut_counts = delay_cut.value_counts()
+    delay_cats = delay_cut.cat.categories
+
+    def timeofday_binning(t):
+        bool_arr = t < np.array(bins_timeofday)
+        true_arr = bool_arr.nonzero()[0]
+        if len(true_arr) == 0:
+           interval = (bins_timeofday[len(bins_timeofday) - 1], time(23, 59))
+        else:
+            index = true_arr[0]
+            if index == 0:
+                interval = (time(0, 0), bins_timeofday[index])
+            else:
+                interval = (bins_timeofday[index - 1], bins_timeofday[index])
+        return interval
+
+    timeofday_cut = df['sched_time'].apply(timeofday_binning).astype("category")
+    timeofday_cut_counts = timeofday_cut.value_counts()
+    timeofday_cats = timeofday_cut.cat.categories
+
+    df['avg_delay_diff_bin'] = delay_cut
+    df['timeofday_bin'] = timeofday_cut
+    df['timeofday_bin_left'] = timeofday_cut.apply(lambda x: x[0])
 
 
+    # get categories: timeofday_cut.cat.categories
+
+    # create matrix (each entry is a bin) -- x-axis: timeofday, y-axis: delay diff
+    bin_matrix = pd.crosstab(df['avg_delay_diff_bin'], df['timeofday_bin'])
+
+    # normalize
+    norm_matrix = pd.DataFrame([(bin_matrix.iloc[:, i] / sum(bin_matrix.iloc[:, i]) / len(timeofday_cats)) for i in range(len(timeofday_cats))]).transpose()
+    # get timeofday name: norm_matrix[i].name
+
+
+    # get datapoints belonging to certain bins:
+    # df.loc[df['avg_delay_diff_bin'] == delay_cats[0]] --> data points with avg delay diff of (-60.0, -30.5]
+    # for some reason this doesn't work with timeofday... so instead use just left value of the bin:
+    # df.loc[df['timeofday_bin_left'] == timeofday_cats[0][0]]
+
+    norm_matrix.to_csv('normalized_bin_counts.csv', index=False)
+    df.to_csv('delays_edges_binned.csv', index=False)
+
+
+# -----------------------------------------------------------------------------------------
+""" RESULT 1: example output of delay_diff_dict
+
+ ('123', 4.0): 
+ [   stop_from_id           stop_from_loc stop_to_id             stop_to_loc  \
+  0       2313_04  (52.221734, 21.092292)    2269_02  (52.221089, 21.096954)   
+  1       2269_02  (52.221089, 21.096954)    2269_01  (52.221206, 21.097342)   
+  2       2269_01  (52.221206, 21.097342)    2128_02  (52.226292, 21.100221)   
+  3       2128_02  (52.226292, 21.100221)    2124_02  (52.230204, 21.095359)   
+  4       2124_02  (52.230204, 21.095359)    2250_02  (52.232367, 21.096466)   
+  5       2250_02  (52.232367, 21.096466)    2102_04  (52.236196, 21.098363)   
+  6       2102_04  (52.236196, 21.098363)    2107_02  (52.238006, 21.099511)   
+  7       2107_02  (52.238006, 21.099511)    2011_01   (52.24262, 21.101188)   
+  8       2011_01   (52.24262, 21.101188)    2010_01  (52.244099, 21.094242)   
+  9       2010_01  (52.244099, 21.094242)    2008_08  (52.245865, 21.084594)   
+  10      2008_08  (52.245865, 21.084594)    2113_02  (52.250823, 21.084664)   
+  11      2113_02  (52.250823, 21.084664)    2121_01  (52.252711, 21.082849)   
+  
+      delay_diff  stop_seq_diff  avg_delay_diff line  brigade  sched_date  \
+  0        -18.0            1.0           -18.0  123      4.0  2020-09-01   
+  1        664.0            1.0           664.0  123      4.0  2020-09-01   
+  2       -665.0            1.0          -665.0  123      4.0  2020-09-01   
+  3         -1.0            2.0            -0.5  123      4.0  2020-09-01   
+  4         28.0            1.0            28.0  123      4.0  2020-09-01   
+  5         15.0            1.0            15.0  123      4.0  2020-09-01   
+  6         11.0            1.0            11.0  123      4.0  2020-09-01   
+  7         49.0            2.0            24.5  123      4.0  2020-09-01   
+  8         63.0            1.0            63.0  123      4.0  2020-09-01   
+  9        -44.0            1.0           -44.0  123      4.0  2020-09-01   
+  10        24.0            1.0            24.0  123      4.0  2020-09-01   
+  11       -28.0            1.0           -28.0  123      4.0  2020-09-01   
+  
+     sched_time  
+  0    22:07:00  
+  1    22:24:00  
+  2    22:10:00  
+  3    22:12:00  
+  4    22:12:00  
+  5    22:14:00  
+  6    22:15:00  
+  7    22:17:00  
+  8    22:18:00  
+  9    22:20:00  
+  10   22:22:00  
+  11   22:23:00  ],
+  
+  
+ ('239', 51.0): 
+    [  stop_from_id           stop_from_loc stop_to_id             stop_to_loc  \
+  0      3132_02   (52.15571, 21.033754)    3133_02  (52.151325, 21.026204)   
+  1      3133_02  (52.151325, 21.026204)    3013_02    (52.15408, 21.01796)   
+  2      3013_02    (52.15408, 21.01796)    3415_01   (52.14645, 21.015266)   
+  3      3415_01   (52.14645, 21.015266)    3416_02  (52.144157, 21.010789)   
+  4      3416_02  (52.144157, 21.010789)    3419_51  (52.142301, 21.006083)   
+  
+     delay_diff  stop_seq_diff  avg_delay_diff line  brigade  sched_date  \
+  0       -95.0            2.0      -47.500000  239     51.0  2020-09-01   
+  1       745.0            3.0      248.333333  239     51.0  2020-09-01   
+  2      -715.0            1.0     -715.000000  239     51.0  2020-09-01   
+  3        26.0            1.0       26.000000  239     51.0  2020-09-01   
+  4         8.0            1.0        8.000000  239     51.0  2020-09-01   
+  
+    sched_time  
+  0   22:13:00  
+  1   22:27:00  
+  2   22:17:00  
+  3   22:18:00  
+  4   22:19:00  ,   
+  
+  stop_from_id           stop_from_loc stop_to_id             stop_to_loc  \
+  0      3416_01   (52.144273, 21.01131)    3413_01  (52.152459, 21.014953)   
+  1      3413_01  (52.152459, 21.014953)    3130_01  (52.155819, 21.023741)   
+  
+     delay_diff  stop_seq_diff  avg_delay_diff line  brigade  sched_date  \
+  0       657.0            4.0          164.25  239     51.0  2020-09-01   
+  1      -638.0            2.0         -319.00  239     51.0  2020-09-01   
+  
+    sched_time  
+  0   22:16:00  
+  1   22:29:00  ],
+  
+  
+  
+
+also: 'df' gives all dataFrames concatenated
 """
-
