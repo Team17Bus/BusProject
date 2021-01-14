@@ -2,7 +2,7 @@ import pandas as pd
 
 from datetime import timedelta
 
-debug = True
+debug = False
 
 '''
 def match_schedule(schedule, arrivals):
@@ -183,7 +183,7 @@ def match_schedule2(schedule, arrivals):
             n = 0
             m = 0
 
-            if not debug: print('----NEW BRIGADE----')
+            if not debug: print('----NEW BRIGADE----'+str(line)+'----'+str(brig)+'----')
 
             for ind_i, row_i in group.iterrows():
 

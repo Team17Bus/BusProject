@@ -1,29 +1,42 @@
 import pandas as pd
-import datetime
 from schedule_matching import match_schedule2
 import sys
 
 debug = True
 
-#today = sys.argv[1]    # this is a parameter that indicates the day you are working with,
+
+def convert_dtype(x):
+    if not x:
+        return ''
+    try:
+        return float(x)
+    except:
+        return ''
+
+dates = sys.argv[1].split(',')
+
+today = dates[0]    # this is a parameter that indicates the day you are working with,
                         # which is necessary for computing the datetime objects (where only time is available)
                         # should be in the format 2020_09_01
-#yesterday = sys.argv[2]
+if debug: print(today)
 
-today = 2020_09_01
-yesterday = 2020_09_01
+yesterday = dates[1]
+
+
+#today = '2020_09_01'
+#yesterday = '2020_09_01'
 
 #dir_schedule_today = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/" + today + "/stop_times.txt"
 #dir_schedule_yesterday = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/" + today + "/stop_times.txt"
 
-dir_schedule_today = 'historic_schedule/stop_times_'+today+'.txt'
-dir_schedule_yesterday = 'historic_schedule/stop_times_'+yesterday+'.txt'
+dir_schedule_today = 'BusProject/historic_schedule/stop_times_'+today+'.txt'
+dir_schedule_yesterday = 'BusProject/historic_schedule/stop_times_'+yesterday+'.txt'
 
 #dir_arrivals = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/Historic Data/2020_09_01.csv"
 #dir_matches = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/Historic Data/2020_09_01_matched.csv"
 
-dir_arrivals = 'arrival_estimations_asb/'+today+'.csv'
-dir_matches = 'arrival_matches_asb/'+today+'.csv'
+dir_arrivals = 'BusProject/arrival_estimations_asb/'+today+'.csv'
+dir_matches = 'BusProject/arrival_matches_asb/'+today+'.csv'
 
 data_stop_times = pd.read_csv(dir_schedule_today, sep=",")
 data_stop_times_yesterday = pd.read_csv(dir_schedule_yesterday, sep=",")
@@ -42,6 +55,9 @@ data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains
 data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 27'))]
 data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 28'))]
 data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 29'))]
+data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 30'))]
+data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 31'))]
+data_stop_times = data_stop_times[~(data_stop_times['arrival_time'].str.contains(' 32'))]
 
 # add all scheduled arrivals that actually take place on this day, but are in yesterday's schedule
 data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 24'))])
@@ -50,6 +66,9 @@ data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arr
 data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 27'))])
 data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 28'))])
 data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 29'))])
+data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 30'))])
+data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 31'))])
+data_stop_times.append(data_stop_times_yesterday[(data_stop_times_yesterday['arrival_time'].str.contains(' 32'))])
 
 # recplace the 'imaginary' hours
 data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 24', ' 00')
@@ -58,10 +77,13 @@ data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 
 data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 27', ' 03')
 data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 28', ' 04')
 data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 29', ' 05')
+data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 30', ' 06')
+data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 31', ' 07')
+data_stop_times['arrival_time'] = data_stop_times['arrival_time'].str.replace(' 32', ' 08')
 
 # formatting the times
 data_stop_times['arrival_time'] = pd.to_datetime(today + data_stop_times['arrival_time'],
-                                                 format='%Y-%m-%d %H:%M:%S')
+                                                 format='%Y_%m_%d %H:%M:%S')
 
 # formatting the the stop id
 data_stop_times['stop_id'] = data_stop_times['stop_id'].str.replace(' ', '')
@@ -120,17 +142,21 @@ print(test_arrival3.head())
 '''
 
 # FOR HISTORIC DATA
-historic_arrivals = pd.read_csv(dir_arrivals, ',', dtype={'0': str, '2': str}, index_col=0)
-historic_arrivals = historic_arrivals.rename(
-    columns={'0': 'bus_line', '1': 'bus_brigade', '2': 'stop_id', '3': 'location', '4': 'arrival_time',
+if today=='2020_09_01':
+    historic_arrivals = pd.read_csv(dir_arrivals, ',', dtype={'0': str, '2': str}, converters={'1':convert_dtype}, index_col=0)
+    historic_arrivals = historic_arrivals.rename(
+        columns={'0': 'bus_line', '1': 'bus_brigade', '2': 'stop_id', '3': 'location', '4': 'arrival_time',
              '5': 'scheduled_time'})
+else:
+    historic_arrivals = pd.read_csv(dir_arrivals, ',',
+                                    names=['bus_line', 'bus_brigade','stop_id','location','arrival_time','scheduled_time'],
+                                    dtype={'bus_line': str, 'stop_id': str},
+                                    converters={'bus_brigade':convert_dtype},index_col=False)
 
 historic_arrivals['stop_id'] = historic_arrivals['stop_id'].str.replace(' ', '')
 historic_arrivals['arrival_time'] = pd.to_datetime(historic_arrivals['arrival_time'], format='%Y-%m-%d %H:%M:%S')
 historic_arrivals[['stop_zespol', 'stop_slupek']] = historic_arrivals.stop_id.str.split("_", expand=True)
 historic_arrivals['stop_seq'] = ""
-
-historic_arrivals = historic_arrivals[historic_arrivals['bus_line'] == "103"]
 
 historic_arrivals = historic_arrivals.sort_values(by='arrival_time', ascending=True)
 
@@ -169,6 +195,7 @@ print(test_arrival5.head())
 
 
 #def main():
+
 
 
 
