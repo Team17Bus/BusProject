@@ -2,7 +2,7 @@ import pandas as pd
 
 from datetime import timedelta
 
-debug = True
+debug = False
 
 '''
 def match_schedule(schedule, arrivals):
@@ -238,7 +238,7 @@ def match_schedule2(schedule, arrivals):
                         abs(time_difference) < abs_time_difference:
                         valid_stop_time = True
                         #if max_sequence < row_j['stop_sequence']: max_sequence = row_j['stop_sequence']
-                        print(old_time_difference_before, time_difference, old_time_difference_after)
+                        if debug: print(old_time_difference_before, time_difference, old_time_difference_after)
                         arrivals['stop_seq'].loc[ind_i] = row_j['stop_sequence']
 
                     # if this difference is in the correct range (+1, +2 or +3 in stop sequence) - the stop is potentially valid
@@ -278,7 +278,7 @@ def match_schedule2(schedule, arrivals):
                         best_sequence = row_j['stop_sequence']
                         best_sequence_difference = sequence_difference
                         match_found = True
-                        print('TIME CHANGED')
+                        if debug: print('TIME CHANGED')
                         #trip_id = row_j['trip_id']
 
                     '''elif valid_stop_time: print('TIME NOT CHANGED')

@@ -1,5 +1,6 @@
 import pandas as pd
 import json
+import sys
 
 # GOAL: to put online schedules in format of schedules for historic data (including a stop sequence)
 
@@ -25,17 +26,18 @@ import json
 # stop_sequence not possible, since we do not know where the bus starts / ends
 # however, we could optionally detect loops
 
+file = sys.argv[1]
 
 # NOTE: 23,342 out of 905,369 entries have times > 23:59:59 (e.g. 29:54:00). max is 29:56:00. --> dropped these...
 # or better: use Jurriaan's method in main.py (replace 24 with 00, 25 with 01 etc) and move to the next day
 
-debug_small_dataset = False
+debug_small_dataset = True
 debug_only_1_line_and_brigade = False
 export_to_csv = True
 
 pd.set_option("display.max_columns", None)
 
-with open('online_data/timetable_per_line_and_stop_16dec.json', 'r') as f:
+with open('BusProject/online_data/timetable_per_line_and_stop_'+file+'.json', 'r') as f:
     data = json.load(f)
 
 if debug_small_dataset:
@@ -115,4 +117,5 @@ if export_to_csv:
     df = pd.concat([order_dict[k] for k in order_dict], axis=0).reset_index(drop=True)
     print(df)
 
-    df.to_csv('online_data/stop_times16dec.csv', index=False, header=False)
+    #df.to_csv('online_data/stop_times'+file+'.csv', index=False, header=False)
+    df.to_csv('BusProject/online_data/stop_times' + file + '.csv',sep=';', index=False, header=False)

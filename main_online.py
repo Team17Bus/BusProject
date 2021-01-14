@@ -15,20 +15,25 @@ def convert_dtype(x):
         return ''
 
 
-#info = sys.argv[1].split(',')
+info = sys.argv[1].split(',')
 
-#file = info[1]
-#today = info[2]
+file = info[0]
+stop = info[1]
+today = info[2]
 
-file = '16dec'
-today = '2020_12_16 '
+#file = '6-7dec'
+#stop = '6-7dec'
+#today = '2020_12_07'+' '
 
-# dir_schedule_today = 'BusProject/online_data/stop_times_'+today+'.csv'
-dir_schedule_today = 'online_data/stop_times' + file + '.csv'
+dir_schedule_today = 'BusProject/online_data/stop_times'+stop+'.csv'
+#dir_schedule_today = 'online_data/stop_times' + stop + '.csv'
 
-# dir_arrivals = 'BusProject/online_data/stop_times_'+today+'.csv'
-dir_arrivals = 'online_data/arrival_estimations_' + file + '.csv'
-dir_matches = 'online_data/arrival_matches_'+file+'a.csv'
+today = today+' '
+
+dir_arrivals = 'BusProject/online_data/arrival_estimations_'+file+'.csv'
+dir_matches = 'BusProject/online_data/arrival_matches'+file+'.csv'
+#dir_arrivals = 'online_data/arrival_estimations_' + file + '.csv'
+#dir_matches = 'online_data/arrival_matches_'+file+'a.csv'
 
 data_stop_times = pd.read_csv(dir_schedule_today, sep=',',
                               names=['lines','bus_brigade','arrival_time','stop_id','stop_sequence'],
@@ -49,6 +54,8 @@ online_arrivals = pd.read_csv(dir_arrivals, ',',
 
 #online_arrivals['stop_zespol'] = online_arrivals['stop_zespol'].astype(str)
 #online_arrivals['stop_zespol'] = online_arrivals['stop_zespol'].astype(str)
+
+online_arrivals = online_arrivals[online_arrivals['scheduled_time'].isnull()]
 
 print(online_arrivals.info())
 
@@ -78,7 +85,7 @@ print(online_arrivals.head())
 print(data_stop_times.head())
 
 match_schedule2(data_stop_times, online_arrivals)
-#online_arrivals = online_arrivals.dropna(subset=['scheduled_time'])
+online_arrivals = online_arrivals.dropna(subset=['scheduled_time'])
 online_arrivals.to_csv(dir_matches, ';', index=False)
 
 if debug: print(online_arrivals.head())
