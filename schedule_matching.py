@@ -2,7 +2,7 @@ import pandas as pd
 
 from datetime import timedelta
 
-debug = False
+debug = True
 
 '''
 def match_schedule(schedule, arrivals):
