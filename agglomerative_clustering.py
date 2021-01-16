@@ -43,10 +43,12 @@ plt.figure(figsize=(10, 7))
 plt.title("Delays Dendograms")
 dend = shc.dendrogram(shc.linkage(data, method='ward'))
 plt.show()
+plt.savefig('dendrogram.png')
 
 cluster = AgglomerativeClustering(n_clusters=5, affinity='euclidean', linkage='ward')
 cluster.fit_predict(data)
 
 plt.figure(figsize=(10, 7))
 plt.scatter(data[:, 0], data[:, 1], c=cluster.labels_, cmap='rainbow')
+plt.savefig('scatter.png')
 plt.show()
