@@ -1,4 +1,5 @@
 import pandas as pd
+import datetime
 from schedule_matching import match_schedule2
 import sys
 
@@ -12,30 +13,30 @@ def convert_dtype(x):
     except:
         return ''
 
-dates = sys.argv[1].split(',')
+arguments = sys.argv[1].split(',')
 
-today = dates[0]    # this is a parameter that indicates the day you are working with,
+today = arguments[0]    # this is a parameter that indicates the day you are working with,
                         # which is necessary for computing the datetime objects (where only time is available)
                         # should be in the format 2020_09_01
 if debug: print(today)
 
-yesterday = dates[1]
-
+yesterday = arguments[1]
+start = arguments[2]
 
 #today = '2020_09_01'
 #yesterday = '2020_09_01'
 
-#dir_schedule_today = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/" + today + "/stop_times.txt"
-#dir_schedule_yesterday = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/" + today + "/stop_times.txt"
+# dir_schedule_today = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stop_times_2020_09_01.txt"
+# dir_schedule_yesterday = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Data/schedules/2020-09-01/stop_times_2020_09_01.txt"
 
 dir_schedule_today = 'BusProject/historic_schedule/stop_times_'+today+'.txt'
 dir_schedule_yesterday = 'BusProject/historic_schedule/stop_times_'+yesterday+'.txt'
 
-#dir_arrivals = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/Historic Data/2020_09_01.csv"
-#dir_matches = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/Historic Data/2020_09_01_matched.csv"
+# dir_arrivals = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/Historic Data/2020_09_01.csv"
+# dir_matches = "C:/Users/jurri/Documents/Studie/DSDM 2020 - 2021/Project 1/Arrivals/Historic Data/2020_09_01_matched.csv"
 
 dir_arrivals = 'BusProject/arrival_estimations_asb/'+today+'.csv'
-dir_matches = 'BusProject/arrival_matches_asb/'+today+'.csv'
+dir_matches = 'BusProject/arrival_matches_asb/'+today+start+'.csv'
 
 data_stop_times = pd.read_csv(dir_schedule_today, sep=",")
 data_stop_times_yesterday = pd.read_csv(dir_schedule_yesterday, sep=",")
@@ -159,9 +160,19 @@ historic_arrivals['arrival_time'] = pd.to_datetime(historic_arrivals['arrival_ti
 historic_arrivals[['stop_zespol', 'stop_slupek']] = historic_arrivals.stop_id.str.split("_", expand=True)
 historic_arrivals['stop_seq'] = ""
 
+# select only the arrivals between 5:00 and 23:00 of today
+min_str = today + ' 04:59:59'
+max_str = today + ' 23:00:00'
+
+min = datetime.datetime.strptime(min_str, '%Y_%m_%d %H:%M:%S')
+max = datetime.datetime.strptime(max_str, '%Y_%m_%d %H:%M:%S')
+
+online_arrivals = historic_arrivals[historic_arrivals['arrival_time']<max]
+online_arrivals = historic_arrivals[historic_arrivals['arrival_time']>min]
+
 historic_arrivals = historic_arrivals.sort_values(by='arrival_time', ascending=True)
 
-match_schedule2(data_stop_times, historic_arrivals)
+match_schedule2(data_stop_times, historic_arrivals, dir_matches, int(start))
 historic_arrivals = historic_arrivals.dropna(subset=['scheduled_time'])
 historic_arrivals.to_csv(dir_matches, ';', index=False)
 
