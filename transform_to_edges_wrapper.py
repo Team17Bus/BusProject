@@ -16,4 +16,4 @@ files_done = listdir(FOLDER_OUT)
 
 for f in files:
     if not 'delays_edges_' + f in files_done:
-        edges_transform(FOLDER_IN + '/' + f, FOLDER_OUT)
+        edges_transform(f, FOLDER_IN, FOLDER_OUT)

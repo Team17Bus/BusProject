@@ -3,13 +3,15 @@ from datetime import datetime, time
 import numpy as np
 import sys
 
-def edges_transform(filename, folder_out):
+def edges_transform(filename, folder_in, folder_out):
 
     debug_with_one_line_one_brigade = False
     debug_line = 109
     debug_brigade = 50
 
     historical_data = True  # False if using online data
+
+    print_progress = True
 
     # TODO: make work for online arrivals / schedules
     # problem: no stop_seq --> should start over with delay diff if seq starts over, but not possible with online data...
@@ -36,7 +38,7 @@ def edges_transform(filename, folder_out):
         print(date)
 
         # import arrivals
-        arr = pd.read_csv(filename, sep=';', header=0)
+        arr = pd.read_csv(folder_in + '/' + filename, sep=';', header=0)
         arr = arr[arr['scheduled_time'].notnull()]
 
         """ Not necessary
@@ -115,11 +117,20 @@ def edges_transform(filename, folder_out):
         combos = arr.loc[:, ['bus_line', 'bus_brigade']].drop_duplicates()
         delay_diff_dict = dict()   # stores: list of dataframes: stop_from stop_to delay_diff stop_seq_diff avg_delay_diff; (line, brigade) as keys
                                                # each dataframe corresponds to a run (complete stop sequence)
+
+        num_combos = len(combos)
+
         for i in range(len(combos)):
+            if print_progress:
+                print(f'{i} / {num_combos}')
             line = combos.iloc[i]['bus_line']
             brigade = combos.iloc[i]['bus_brigade']
 
             sub_arr = arr.loc[(arr['bus_brigade'] == brigade) & (arr['bus_line'] == line)]
+
+            if len(sub_arr) == 0:
+                continue
+
             sub_arr = sub_arr.reset_index(drop=True)
 
             begin_indices = [0]
