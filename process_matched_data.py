@@ -9,8 +9,6 @@ def edges_transform(filename, folder_in, folder_out):
     debug_line = 109
     debug_brigade = 50
 
-    historical_data = True  # False if using online data
-
     print_progress = True
 
     # TODO: make work for online arrivals / schedules
@@ -32,156 +30,157 @@ def edges_transform(filename, folder_in, folder_out):
 
     "filename ex: 2020_09_01.csv"
 
-    if historical_data:
+    date = filename.split('.')[0]
+    print(date)
 
-        date = filename.split('.')[0]
-        print(date)
-
-        # import arrivals
+    # import arrivals
+    if len(folder_in) == 0:
+        arr = pd.read_csv(filename, sep=';', header=0)
+    else:
         arr = pd.read_csv(folder_in + '/' + filename, sep=';', header=0)
-        arr = arr[arr['scheduled_time'].notnull()]
+    arr = arr[arr['scheduled_time'].notnull()]
 
-        """ Not necessary
-        # import schedule
-        sched = pd.read_csv("stop_times.txt", sep=",")
-    
-        # split trip_id column into line - brigade
-        trip_id = sched['trip_id'].str.split('_', expand=True)
-        sched['line'] = trip_id.iloc[:, 0]
-        sched['brigade'] = trip_id.iloc[:, 1]
-        sched['start_time'] = trip_id.iloc[:, 3]
-        """
+    """ Not necessary
+    # import schedule
+    sched = pd.read_csv("stop_times.txt", sep=",")
 
-        # get all combinations of line and brigade in arrivals:
-        arr.groupby(by=['bus_line', 'bus_brigade']).size()
+    # split trip_id column into line - brigade
+    trip_id = sched['trip_id'].str.split('_', expand=True)
+    sched['line'] = trip_id.iloc[:, 0]
+    sched['brigade'] = trip_id.iloc[:, 1]
+    sched['start_time'] = trip_id.iloc[:, 3]
+    """
 
-        if debug_with_one_line_one_brigade:
-            arr = arr.loc[(arr['bus_brigade'] == debug_brigade) & (arr['bus_line'] == debug_line)] # TODO: put 'debug_brigade' when excel error has been fixed
-            #sched = sched.loc[(sched['brigade'] == str(debug_brigade)) & (sched['line'] == str(debug_line))]
+    # get all combinations of line and brigade in arrivals:
+    arr.groupby(by=['bus_line', 'bus_brigade']).size()
 
-
-        # add column with absolute delays
-        #arr['arrival_time'] = arr['arrival_time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
-        #arr['scheduled_time'] = arr['scheduled_time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
-        arr['arrival_time'] = pd.to_datetime(arr['arrival_time'], format='%Y-%m-%d %H:%M:%S')
-        arr['scheduled_time'] = pd.to_datetime(arr['scheduled_time'], format='%Y-%m-%d %H:%M:%S')
-
-        arr['absolute_delay_sec'] = arr['arrival_time'] - arr['scheduled_time']
-        arr['absolute_delay_sec'] = arr['absolute_delay_sec'].apply(lambda x: abs(x.total_seconds()))   # in seconds
-        arr['absolute_delay_min'] = arr['absolute_delay_sec'] / 60                                      # in minutes
-        arr = arr.round({'absolute_delay_sec': 0, 'absolute_delay_min': 2})
-
-        # add column with relative delays and number of stops in between
-        arr['relative_delay_sec'] = pd.Series([], dtype='float')
-        arr['stop_seq_diff'] = pd.Series([], dtype='int')           # if stop is just after next one (ideal), this value is 1; if one stop is skipped, value is 2.
+    if debug_with_one_line_one_brigade:
+        arr = arr.loc[(arr['bus_brigade'] == debug_brigade) & (arr['bus_line'] == debug_line)] # TODO: put 'debug_brigade' when excel error has been fixed
+        #sched = sched.loc[(sched['brigade'] == str(debug_brigade)) & (sched['line'] == str(debug_line))]
 
 
-        if debug_with_one_line_one_brigade:
-            arr = arr.reset_index(drop=True)
-            begin_indices_debug = [0]
+    # add column with absolute delays
+    #arr['arrival_time'] = arr['arrival_time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S.%f'))
+    #arr['scheduled_time'] = arr['scheduled_time'].apply(lambda x: datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+    arr['arrival_time'] = pd.to_datetime(arr['arrival_time'], format='%Y-%m-%d %H:%M:%S')
+    arr['scheduled_time'] = pd.to_datetime(arr['scheduled_time'], format='%Y-%m-%d %H:%M:%S')
 
-            prev_stop_seq = arr.iloc[0]['stop_seq']
-            prev_delay = arr.iloc[0]['absolute_delay_sec']
-            for i in range(1, len(arr)):
-                curr_arr = arr.iloc[i]
-                curr_stop_seq = curr_arr.loc['stop_seq']
-                curr_delay = curr_arr.loc['absolute_delay_sec']
-                if curr_stop_seq < prev_stop_seq:   # sequence starts over
-                    begin_indices_debug.append(i)
-                else:
-                    stop_seq_diff = curr_stop_seq - prev_stop_seq
-                    arr.iloc[i, arr.columns.get_indexer(['stop_seq_diff'])] = stop_seq_diff
-                    arr.iloc[i, arr.columns.get_indexer(['relative_delay_sec'])] = curr_delay - prev_delay
-                prev_stop_seq = curr_stop_seq
-                prev_delay = curr_delay
+    arr['absolute_delay_sec'] = arr['arrival_time'] - arr['scheduled_time']
+    arr['absolute_delay_sec'] = arr['absolute_delay_sec'].apply(lambda x: abs(x.total_seconds()))   # in seconds
+    arr['absolute_delay_min'] = arr['absolute_delay_sec'] / 60                                      # in minutes
+    arr = arr.round({'absolute_delay_sec': 0, 'absolute_delay_min': 2})
 
-            # split dataframe into seperate runs
-            splits = begin_indices_debug + [len(arr)]
-            all_runs = [arr.iloc[splits[n]:splits[n + 1]] for n in range(len(splits) - 1)]
-            runs = [all_runs[i] for i in range(len(all_runs)) if len(all_runs[i]) > 1]
-
-            # use list comprehension to come up with stop_from stop_to delay_diff stop_seq_diff avg_delay_diff for each run
-            delay_diff_dict_debug = dict()
-            k = (debug_line, debug_brigade)
-
-            delay_diff_dict_debug[k] = [pd.DataFrame(
-                [[runs[r].iloc[i]['stop_id'],
-                  runs[r].iloc[i+1]['stop_id'],
-                  runs[r].iloc[i+1]['relative_delay_sec'],
-                  runs[r].iloc[i+1]['stop_seq_diff'],
-                  runs[r].iloc[i+1]['relative_delay_sec']/runs[r].iloc[i+1]['stop_seq_diff']]
-                 for i in range(len(runs[r])-1)],
-                columns=['stop_from', 'stop_to', 'delay_diff', 'stop_seq_diff', 'avg_delay_diff'])
-                for r in range(len(runs))]
-
-        combos = arr.loc[:, ['bus_line', 'bus_brigade']].drop_duplicates()
-        delay_diff_dict = dict()   # stores: list of dataframes: stop_from stop_to delay_diff stop_seq_diff avg_delay_diff; (line, brigade) as keys
-                                               # each dataframe corresponds to a run (complete stop sequence)
-
-        num_combos = len(combos)
-
-        for i in range(len(combos)):
-            if print_progress:
-                print(f'{i} / {num_combos}')
-            line = combos.iloc[i]['bus_line']
-            brigade = combos.iloc[i]['bus_brigade']
-
-            sub_arr = arr.loc[(arr['bus_brigade'] == brigade) & (arr['bus_line'] == line)]
-
-            if len(sub_arr) == 0:
-                continue
-
-            sub_arr = sub_arr.reset_index(drop=True)
-
-            begin_indices = [0]
-
-            prev_stop_seq = sub_arr.iloc[0]['stop_seq']
-            prev_delay = sub_arr.iloc[0]['absolute_delay_sec']
-            for i in range(1, len(sub_arr)):
-                curr_arr = sub_arr.iloc[i]
-                curr_stop_seq = curr_arr.loc['stop_seq']
-                curr_delay = curr_arr.loc['absolute_delay_sec']
-                if curr_stop_seq < prev_stop_seq:   # sequence starts over
-                    begin_indices.append(i)
-                else:
-                    stop_seq_diff = curr_stop_seq - prev_stop_seq
-                    sub_arr.iloc[i, sub_arr.columns.get_indexer(['stop_seq_diff'])] = stop_seq_diff
-                    sub_arr.iloc[i, sub_arr.columns.get_indexer(['relative_delay_sec'])] = curr_delay - prev_delay
-                prev_stop_seq = curr_stop_seq
-                prev_delay = curr_delay
-
-            # split dataframe into seperate runs
-            splits = begin_indices + [len(sub_arr)]
-            all_runs = [sub_arr.iloc[splits[n]:splits[n + 1]] for n in range(len(splits) - 1)]
-            runs = [all_runs[i] for i in range(len(all_runs)) if len(all_runs[i]) > 1]
-
-            # use list comprehension to come up with stop_from stop_to delay_diff stop_seq_diff avg_delay_diff for each run
-            delay_diff_dict[(line, brigade)] = [pd.DataFrame(
-                [[runs[r].iloc[i]['stop_id'],
-                  runs[r].iloc[i]['location'],
-                  runs[r].iloc[i + 1]['stop_id'],
-                  runs[r].iloc[i + 1]['location'],
-                  runs[r].iloc[i + 1]['relative_delay_sec'],
-                  runs[r].iloc[i + 1]['stop_seq_diff'],
-                  runs[r].iloc[i + 1]['relative_delay_sec'] / runs[r].iloc[i + 1]['stop_seq_diff'],
-                  runs[r].iloc[i + 1]['relative_delay_sec'] / runs[r].iloc[i + 1]['stop_seq_diff'] / 60.0,
-                  line,
-                  brigade,
-                  runs[r].iloc[i + 1]['scheduled_time'],
-                  runs[r].iloc[i + 1]['scheduled_time'].date(),
-                  runs[r].iloc[i + 1]['scheduled_time'].time()]
-                 for i in range(len(runs[r]) - 1)],
-                columns=['stop_from_id', 'stop_from_loc', 'stop_to_id', 'stop_to_loc', 'delay_diff', 'stop_seq_diff', 'avg_delay_diff_sec', 'avg_delay_diff_min', 'line', 'brigade', 'sched_datetime', 'sched_date', 'sched_time'])
-                for r in range(len(runs))]
+    # add column with relative delays and number of stops in between
+    arr['relative_delay_sec'] = pd.Series([], dtype='float')
+    arr['stop_seq_diff'] = pd.Series([], dtype='int')           # if stop is just after next one (ideal), this value is 1; if one stop is skipped, value is 2.
 
 
-        # concat all dataFrames
-        df = pd.concat([delay_diff_dict[k][r] for k in delay_diff_dict for r in range(len(delay_diff_dict[k]))],
-                       axis=0).reset_index(drop=True)
+    if debug_with_one_line_one_brigade:
+        arr = arr.reset_index(drop=True)
+        begin_indices_debug = [0]
 
-        df = df.drop(df[df['stop_seq_diff'] == 0].index)  # a very small number of rows have this
+        prev_stop_seq = arr.iloc[0]['stop_seq']
+        prev_delay = arr.iloc[0]['absolute_delay_sec']
+        for i in range(1, len(arr)):
+            curr_arr = arr.iloc[i]
+            curr_stop_seq = curr_arr.loc['stop_seq']
+            curr_delay = curr_arr.loc['absolute_delay_sec']
+            if curr_stop_seq < prev_stop_seq:   # sequence starts over
+                begin_indices_debug.append(i)
+            else:
+                stop_seq_diff = curr_stop_seq - prev_stop_seq
+                arr.iloc[i, arr.columns.get_indexer(['stop_seq_diff'])] = stop_seq_diff
+                arr.iloc[i, arr.columns.get_indexer(['relative_delay_sec'])] = curr_delay - prev_delay
+            prev_stop_seq = curr_stop_seq
+            prev_delay = curr_delay
 
-        df.to_csv(folder_out + '/' + 'delays_edges_' + filename, index=False)
+        # split dataframe into seperate runs
+        splits = begin_indices_debug + [len(arr)]
+        all_runs = [arr.iloc[splits[n]:splits[n + 1]] for n in range(len(splits) - 1)]
+        runs = [all_runs[i] for i in range(len(all_runs)) if len(all_runs[i]) > 1]
+
+        # use list comprehension to come up with stop_from stop_to delay_diff stop_seq_diff avg_delay_diff for each run
+        delay_diff_dict_debug = dict()
+        k = (debug_line, debug_brigade)
+
+        delay_diff_dict_debug[k] = [pd.DataFrame(
+            [[runs[r].iloc[i]['stop_id'],
+              runs[r].iloc[i+1]['stop_id'],
+              runs[r].iloc[i+1]['relative_delay_sec'],
+              runs[r].iloc[i+1]['stop_seq_diff'],
+              runs[r].iloc[i+1]['relative_delay_sec']/runs[r].iloc[i+1]['stop_seq_diff']]
+             for i in range(len(runs[r])-1)],
+            columns=['stop_from', 'stop_to', 'delay_diff', 'stop_seq_diff', 'avg_delay_diff'])
+            for r in range(len(runs))]
+
+    combos = arr.loc[:, ['bus_line', 'bus_brigade']].drop_duplicates()
+    delay_diff_dict = dict()   # stores: list of dataframes: stop_from stop_to delay_diff stop_seq_diff avg_delay_diff; (line, brigade) as keys
+                                           # each dataframe corresponds to a run (complete stop sequence)
+
+    num_combos = len(combos)
+
+    for i in range(len(combos)):
+        if print_progress:
+            print(f'{i} / {num_combos}')
+        line = combos.iloc[i]['bus_line']
+        brigade = combos.iloc[i]['bus_brigade']
+
+        sub_arr = arr.loc[(arr['bus_brigade'] == brigade) & (arr['bus_line'] == line)]
+
+        if len(sub_arr) == 0:
+            continue
+
+        sub_arr = sub_arr.reset_index(drop=True)
+
+        begin_indices = [0]
+
+        prev_stop_seq = sub_arr.iloc[0]['stop_seq']
+        prev_delay = sub_arr.iloc[0]['absolute_delay_sec']
+        for i in range(1, len(sub_arr)):
+            curr_arr = sub_arr.iloc[i]
+            curr_stop_seq = curr_arr.loc['stop_seq']
+            curr_delay = curr_arr.loc['absolute_delay_sec']
+            if curr_stop_seq < prev_stop_seq:   # sequence starts over
+                begin_indices.append(i)
+            else:
+                stop_seq_diff = curr_stop_seq - prev_stop_seq
+                sub_arr.iloc[i, sub_arr.columns.get_indexer(['stop_seq_diff'])] = stop_seq_diff
+                sub_arr.iloc[i, sub_arr.columns.get_indexer(['relative_delay_sec'])] = curr_delay - prev_delay
+            prev_stop_seq = curr_stop_seq
+            prev_delay = curr_delay
+
+        # split dataframe into seperate runs
+        splits = begin_indices + [len(sub_arr)]
+        all_runs = [sub_arr.iloc[splits[n]:splits[n + 1]] for n in range(len(splits) - 1)]
+        runs = [all_runs[i] for i in range(len(all_runs)) if len(all_runs[i]) > 1]
+
+        # use list comprehension to come up with stop_from stop_to delay_diff stop_seq_diff avg_delay_diff for each run
+        delay_diff_dict[(line, brigade)] = [pd.DataFrame(
+            [[runs[r].iloc[i]['stop_id'],
+              runs[r].iloc[i]['location'],
+              runs[r].iloc[i + 1]['stop_id'],
+              runs[r].iloc[i + 1]['location'],
+              runs[r].iloc[i + 1]['relative_delay_sec'],
+              runs[r].iloc[i + 1]['stop_seq_diff'],
+              runs[r].iloc[i + 1]['relative_delay_sec'] / runs[r].iloc[i + 1]['stop_seq_diff'],
+              runs[r].iloc[i + 1]['relative_delay_sec'] / runs[r].iloc[i + 1]['stop_seq_diff'] / 60.0,
+              line,
+              brigade,
+              runs[r].iloc[i + 1]['scheduled_time'],
+              runs[r].iloc[i + 1]['scheduled_time'].date(),
+              runs[r].iloc[i + 1]['scheduled_time'].time()]
+             for i in range(len(runs[r]) - 1)],
+            columns=['stop_from_id', 'stop_from_loc', 'stop_to_id', 'stop_to_loc', 'delay_diff', 'stop_seq_diff', 'avg_delay_diff_sec', 'avg_delay_diff_min', 'line', 'brigade', 'sched_datetime', 'sched_date', 'sched_time'])
+            for r in range(len(runs))]
+
+
+    # concat all dataFrames
+    df = pd.concat([delay_diff_dict[k][r] for k in delay_diff_dict for r in range(len(delay_diff_dict[k]))],
+                   axis=0).reset_index(drop=True)
+
+    df = df.drop(df[df['stop_seq_diff'] == 0].index)  # a very small number of rows have this
+
+    df.to_csv(folder_out + '/' + 'delays_edges_' + filename, index=False)
 
     # ---------------------------------------------------------------------------------------------
 
