@@ -156,10 +156,20 @@ def match_schedule(schedule, arrivals):
     # In terms of time and in terms of stop sequence
     # If it is valid in both cases, then it must be the correct stop
 
-def match_schedule2(schedule, arrivals):
+def match_schedule2(schedule, arrivals, directory, counter_start):
+    line_counter = 0
+
     line_grouped = arrivals.groupby(['bus_line'])
 
     for line, line_group in line_grouped: # for every line
+
+        if (line_counter < counter_start):
+            line_counter = line_counter + 1
+            continue
+
+        if (line_counter > counter_start + 50):
+            break
+
         if debug: print(line)
 
         grouped = line_group.groupby(['bus_brigade'])
@@ -348,6 +358,11 @@ def match_schedule2(schedule, arrivals):
                     if debug: print('RESET SEQUENCE')
 
                 # this method fails if the bus arrives in the wrong order at the bus stops by the ASB method
+        line_counter = line_counter + 1
+
+        if (line_counter % 5 == 0):
+            arrivals.to_csv(directory, ';', index=False)
+            if not debug: print('----write to file----')
 
     return
 
